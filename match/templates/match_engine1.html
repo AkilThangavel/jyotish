@@ -1,0 +1,100 @@
+<!DOCTYPE html >
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=0.4">
+        <title> Astro Match | Matching Chart</title>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    </head>
+
+    <style>
+        .vertical-center {
+            min-height: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+    </style>
+
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary" role="navigation">
+                <a class="navbar-brand" href="#">AstroMatching</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <div class="navbar-nav">
+                        <a class="nav-item nav-link active" href="index">Home <span class="sr-only">(current)</span></a>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropDown1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              Matching
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropDown1">
+                                <a class="dropdown-item nav-item nav-link text-dark" href="data_input1">Match 1.0</a>
+                                <a class="dropdown-item nav-item nav-link text-dark" href="data_input2">Match 2.0</a>
+                                <a class="dropdown-item nav-item nav-link text-dark" href="data_input3">Match 3.0</a>
+                            </div>
+                        </li>
+                        <a class="nav-item nav-link" href="persons_list">Persons</a>
+                    </div>
+                </div>
+        </nav>
+
+        <div class="container-fluid justify-content-center vertical-center">
+            <div class="row">
+                <div class="col">
+                    <div id="main-chart"></div>
+                </div>
+            </div>
+            <script>
+                var x = "{{items}}".split(',')
+                var y1 = "{{y1}}".split(',')
+                var y2 = "{{y2}}".split(',')
+
+                data = [
+                {
+                    histfunc: "sum",
+                    y: y1,
+                    x: x,
+                    type: "histogram",
+                    name: "{{name1}} to {{name2}}"
+                },
+                {
+                    histfunc: "sum",
+                    y: y2,
+                    x: x,
+                    type: "histogram",
+                    name: "{{name2}} to {{name1}}"
+                }
+                ];
+
+                var lay = {
+                    title: {
+                        text: "Matching {{name1}} and {{name2}}",
+                        font: {
+                            family: "Courier New, monospace",
+                            size: 14
+                        }
+                    },
+                    showlegend: true,
+                    legend: {"orientation": "h"},
+                    autosize: false,
+                    width: 800,
+                    height: 800,
+                    xaxis: {
+                        fixedrange: true
+                    },
+                    yaxis: {
+                        fixedrange: true
+                    }
+                };
+
+                Plotly.newPlot('main-chart', data, lay, {displayModeBar: false, responsive: true});
+            </script>
+        </div>
+    </body>
+</html>

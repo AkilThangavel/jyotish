@@ -1,0 +1,130 @@
+<!DOCTYPE html >
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=0.4">
+        <title> Astro Match | Matching Chart</title>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    </head>
+
+    <style>
+        body {
+            width: 100%;
+            height: 100%;
+        }
+
+        .vertical-center {
+            min-height: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 28pt;
+        }
+
+        p {
+            font-size: 18pt;
+        }
+
+        .button-font {
+            font-size: 18pt;
+        }
+
+        td, th {
+            border: none;
+        }
+    </style>
+
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary d-flex flex-row justify-content-between" role="navigation">
+                <a class="navbar-brand" href="index">AstroMatching</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <div class="navbar-nav d-flex">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropDown1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              Relocation map
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropDown1">
+                                <a class="dropdown-item nav-item nav-link text-dark" href="relocation_map_input">Map</a>
+                                <a class="dropdown-item nav-item nav-link text-dark" href="map_sessions">Map sessions</a>
+                            </div>
+                        </li>
+                        <a class="nav-item nav-link" href="data_input3">Matching</span></a>
+                        {% if user.is_superuser %}
+                            <a class="nav-item nav-link" href="persons_list">Persons</a>
+                        {% endif %}
+                        <button class="btn btn-dark rounded" type="button" onclick="window.location = 'logout'">Logout</button>
+                    </div>
+                </div>
+        </nav>
+
+        <div class="container-fluid justify-content-center vertical-center">
+            <div class="row w-75">
+                <div class="col">
+                    <div class="row justify-content-center">
+                        <h3 class="border border-dark rounded p-2 shadow">
+                            Trends from <b class="text-danger">{{matching_from}}</b> to {{matching_to}}
+                        </h3>
+                    </div>
+
+                    <p></p>
+
+                    <div hidden>
+                        {{report_txts|safe}}
+                    </div>
+
+                    <div class="row justify-content-center">
+                        <div class="p-2">
+                            <div class="row justify-content-center">
+                                <div id="main-chart"></div>
+                            </div>
+                            <div class="row justify-content-center m-1">
+                                {{report_btns|safe}}
+                            </div>
+                        </div>
+
+                        <script>
+                            $('.report_btn').on('click', function() {
+                                var report_html = $('#' + $(this).attr('name')).html();
+                                var new_window = window.open();
+                                new_window.document.body.innerHTML = report_html;
+                                new_window.document.head.innerHTML = '<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">';
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                {% autoescape off %}
+                {{script_part}}
+                {% endautoescape %}
+
+                var lay = {
+                    showlegend: true,
+                    legend: {"orientation": "h"},
+                    autosize: false,
+                    width: window.innerWidth - 100,
+                    height: window.innerHeight - 100,
+                    xaxis: {
+                        fixedrange: true
+                    },
+                    yaxis: {
+                        fixedrange: true
+                    }
+                };
+
+                Plotly.newPlot('main-chart', data, lay, {displayModeBar: false, responsive: true});
+            </script>
+        </div>
+    </body>
+</html>

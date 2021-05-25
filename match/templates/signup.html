@@ -1,0 +1,53 @@
+<!DOCTYPE html >
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title> Astro Match | Sign up</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+    </head>
+
+    <style>
+        .vertical-center {
+            min-height: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+    </style>
+
+    <body>
+        <div class="container vertical-center justify-content-center">
+            <form>
+                <h1 class="h3 font-weight-normal mb-3 text-center">Sign up</h1>
+                <div class="row">
+                    <div class="col">
+                        <input type="text" class="form-control" id="inputName" placeholder="Name">
+                    </div>
+                    <div class="col">
+                        <input type="text" class="form-control" id="inputLastName" placeholder="Last name">
+                    </div>
+                </div>
+                <div class="pt-2"></div>
+                <div class="row">
+                    <div class="col">
+                        <label for="inputBirthdate">Date of birth</label>
+                        <input type="date" class="form-control" id="inputBirthdate">
+                    </div>
+                </div>
+                <p></p>
+                <div class="row">
+                    <div class="col">
+                        <input type="email" class="form-control" id="inputMail" placeholder="E-Mail">
+                        <p></p>
+                        <input type="password" class="form-control" id="inputPassword" placeholder="Password">
+                        <p></p>
+                        <input type="password" class="form-control" id="inputPasswordConfirm" placeholder="Password confirmation">
+                        <p></p>
+                        <button class="btn btn-block btn-primary mt-3" type="submit">Sign up</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </body>
+</html>

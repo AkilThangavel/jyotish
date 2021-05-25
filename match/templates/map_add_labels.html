@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+	<title>Add Your Labels</title>
+    <script src="https://cesiumjs.org/releases/1.60/Build/Cesium/Cesium.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+    <script src='http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js'></script>
+    <link href="https://cesiumjs.org/releases/1.60/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+  </head>
+
+  {% load static %}
+
+  <style>
+      .vertical-center {
+
+        display: flex;
+        align-items: center;
+      }
+
+      html, body {
+          width: 100%;
+          height: 100%;
+      }
+
+      .label_item {
+          background-color: white;
+          color: black;
+          border: 1px solid black;
+      }
+      .label_item:hover {
+          background-color: blue;
+          color: white;
+      }
+
+	  #label_remove {
+		  font-size: 10pt;
+	  }
+
+	  .navbar-dark, .navbar, .navbar-expand {
+		  background-color: #293462;
+	  }
+
+	  body, html {
+		  height: 100%;
+	  }
+
+	  .cesium-viewer-geocoderContainer {
+		  margin-right: 15px;
+	  }
+  </style>
+
+  {% load static %}
+
+  <body style="overflow: hidden">
+	  <nav class="navbar navbar-expand-lg navbar-dark d-flex flex-row justify-content-between" role="navigation">
+			  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+				  <span class="navbar-toggler-icon"></span>
+			  </button>
+			  <div class="collapse navbar-collapse" id="navbarMain">
+				  <div class="navbar-nav d-flex justify-content-between w-100">
+					  <div class="d-flex">
+						  <div class="text-center" style="width: 283px">
+							  <a class="navbar-brand" href="index">JyotishMaps</a>
+						  </div>
+						  <li class="nav-item dropdown">
+							  <a class="nav-link dropdown-toggle" href="#" id="navbarDropDown1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								My World
+							  </a>
+							  <div class="dropdown-menu" aria-labelledby="navbarDropDown1">
+								  <a class="dropdown-item nav-item nav-link text-dark" href="relocation_map_input">Places</a>
+								  <a class="dropdown-item nav-item nav-link text-dark" href="map_sessions">Sessions</a>
+							  </div>
+						  </li>
+						  <a class="nav-item nav-link" href="videos">Videos</a>
+						  {% if user.is_superuser %}
+							  <a class="nav-item nav-link" href="persons_list">Persons</a>
+						  {% endif %}
+						  {% if user.is_superuser %}
+							  <a class="nav-item nav-link" href="admin_panel">Admin panel</a>
+						  {% endif %}
+						  {% if user.is_superuser %}
+							  <a class="nav-item nav-link" href="admin_settings">Settings</a>
+						  {% endif %}
+					  </div>
+					  <div class="d-flex">
+						  <button class="btn btn-dark rounded" type="button" onclick="window.location = 'logout'" style="background-color: #ec9b3b;">Logout</button>
+					  </div>
+
+				  </div>
+			  </div>
+	  </nav>
+
+    <div class="container-fluid m-0 p-0">
+        <div class="row">
+            <div class="text-center" style="position: absolute; left: 0; z-index: 1; height: 100%">
+                <button id="labels_save" class="btn btn-warning btn-block rounded-0" type="button" name="button">Save</button>
+
+                <div id="labels_text" style="width: 300px; overflow-y: auto; background-color: skyblue; height: 90%;">
+                    <h4 class="mb-4 pt-4">Labels</h4>
+
+					{% for lbl in labels %}
+						<div class="m-2 p-1 rounded label_item d-flex flex-row">
+							<div class="d-flex">
+								<textarea class="form-control ta" style="width: 220px; min-height: 65px; line-height: 1; font-size: 11pt;" value="{{lbl.0}}">{{lbl.0}}</textarea>
+							</div>
+							<div class="d-flex flex-column">
+								<button class="m-1 label_remove" type="button" onclick="remove_label(this)">x</button>
+								<button class="m-1" style="font-size: 10pt" type="button" onclick="show_label(this)">Go</button>
+							</div>
+							<input hidden id="c" type="text" value="{{lbl.1}}_____{{lbl.2}}">
+						</div>
+					{% endfor %}
+                </div>
+
+                <div class="" style="position: absolute; left: 300px; top: calc(50% - 20px);">
+                    <button id="labels_btn" style="width: 40px; height: 40px; border-bottom-right-radius: 10px; border-top-right-radius: 10px; outline: none; background-color: white;" type="button" name="button"><</button>
+                </div>
+            </div>
+
+            <div class="col pr-0" style="background-color: black; height: 800px;">
+                <div id="cesiumContainer"></div>
+            </div>
+        </div>
+		<div id="labels_saved_already" hidden>{{already_yes}}</div>
+    </div>
+
+
+    <script>
+        $('#labels_save').click(function() {
+			var data = [];
+
+			$('#labels_text div.label_item').each(function(i, el) {
+				var t = $(el).find('textarea.ta').val();
+				var c = $(el).find('#c').val();
+				var tc = t + '_____' + c;
+				data.push(tc);
+			});
+
+			var user_name = "{{user_name}}";
+
+            $.ajax({
+				url: '/ajax/save_labels/',
+				data: {'labels[]': data, 'user': user_name, 'already': $('#labels_saved_already').html()},
+				dataType: 'json',
+				success: function(data) {
+					$.notify("Labels for session were just saved!", "success");
+				},
+				error: function(data) {
+                    $.notify("Session was not saved due to an error!", "error");
+                }
+			});
+
+			$('#labels_saved_already').html('yes');
+        });
+
+        $('#labels_btn').click(function() {
+            if ($(this).text() == "<") {
+                $('#labels_text').hide();
+                $(this).parent().css('left', "0");
+                $(this).html('>');
+            } else {
+                $('#labels_text').show();
+                $(this).parent().css('left', "300px");
+                $(this).html('<');
+            }
+        });
+    </script>
+
+    <script>
+      function deg_to_rad(deg) {
+          return deg * Math.PI / 180;
+      }
+
+      function rad_to_deg(rad) {
+          return rad * 180 / Math.PI;
+      }
+
+      function lat_lon_to_xyz(lat, lon) {
+          var c = Cesium.Cartesian3.fromDegrees(lon, lat);
+          return [c.x, c.y, c.z];
+      }
+
+      function xyz_to_lat_lon(x, y, z) {
+          var c = Cesium.Cartesian3.fromElements(x, y, z);
+          var cart = Cesium.Cartographic.fromCartesian(c);
+          return [cart.longitude, cart.latitude];
+      }
+
+      function rotate_point(x, y, z, u, v, w, deg) {
+          var rad = deg_to_rad(deg);
+
+          var cr = Math.cos(rad);
+          var sr = Math.sin(rad);
+          var uvws = (u * x + v * y + w * z) * (1 - cr);
+          var uvws2 = u ** 2 + v ** 2 + w ** 2;
+          var suvws2 = Math.sqrt(uvws2);
+
+          var nx = (u * uvws + uvws2 * x * cr + suvws2 * (-w * y + v * z) * sr) / uvws2;
+          var ny = (v * uvws + uvws2 * y * cr + suvws2 * (w * x - u * z) * sr) / uvws2;
+          var nz = (w * uvws + uvws2 * z * cr + suvws2 * (-v * x + u * y) * sr) / uvws2;
+
+          return [nx, ny, nz];
+      }
+
+      Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkNDRiYWYyZi04NTk4LTQ5OGItOTg0MS1hNDUzMjE0YjdiMzciLCJpZCI6MTQ5MDksInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1NjY2NzA0NTl9.6hTdETOJ7y9aJuzgu9avXRPJU5mMO_PqVWhMOgbeBWg';
+
+      var viewer = new Cesium.Viewer('cesiumContainer', {
+        'timeline': false,
+        'selectionIndicator': false,
+        'geocoder': true,
+        'vrButton': false,
+        'fullscreenButton': false,
+        'navigationHelpButton': false,
+        'navigationInstructionsInitiallyVisible': false,
+        'animation': false,
+        'orderIndependentTranslucency': false,
+		'homeButton': false,
+		'baseLayerPicker': false,
+		'sceneModePicker': false,
+        'imageryProvider': Cesium.createWorldImagery({
+        	style : Cesium.IonWorldImageryStyle.AERIAL_WITH_LABELS
+    	})
+      });
+
+	  //
+	  var points = viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection());
+	  //
+
+      var label_index = 0;
+
+	  var labels = [];
+
+	  {% if labels %}
+		  {% for lbl in labels %}
+			  var lon = {{lbl.2}};
+			  var lat = {{lbl.1}};
+
+			  points.add({
+					position: Cesium.Cartesian3.fromDegrees(lon, lat),
+					color: Cesium.Color.RED,
+					outlineColor: Cesium.Color.BLACK,
+					outlineWidth: 1,
+					pixelSize: 10
+				 })
+		  {% endfor %}
+	  {% endif %}
+
+	  function remove_label(btn, idx) {
+		  var idx = $('.label_remove').index(btn);
+		  $(btn).closest('.label_item').remove();
+		  points.remove(points.get(idx));
+		  label_index = label_index - 1;
+	  }
+
+	  function show_label(btn) {
+		  var lat_lon = $(btn).parent().parent().find('#c').val().split('_____');
+
+		  var lat = lat_lon[0] * 1;
+		  var lon = lat_lon[1] * 1;
+
+		  var center = Cesium.Cartesian3.fromDegrees(lon, lat);
+		  viewer.camera.flyTo({destination: center, duration: 1.0, maximumHeight: 10000});
+	  }
+
+
+	  var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+	  handler.setInputAction(function(click) {
+			var ellipsoid = viewer.scene.globe.ellipsoid;
+	        var scene = viewer.scene;
+			var ray = scene.camera.getPickRay(click.position);
+			var pos = scene.globe.pick(ray,scene);
+
+	        if (true) {
+				var cartographic = ellipsoid.cartesianToCartographic(pos);
+                var lon = Cesium.Math.toDegrees(cartographic.longitude).toFixed(10);
+                var lat = Cesium.Math.toDegrees(cartographic.latitude).toFixed(10);
+
+                var el = '<div class="m-2 p-1 rounded label_item d-flex flex-row"> <div class="d-flex"><textarea class="form-control ta" style="width: 220px; min-height: 65px"></textarea></div> <div class="d-flex flex-column"><button class="m-1 label_remove" type="button" onclick="remove_label(this, ' + label_index.toString() + ')">x</button><button onclick="show_label(this)" class="m-1" style="font-size: 10pt" type="button">Go</button></div> <input hidden id="c" type="text" value="' + lat.toString() + '_____' + lon.toString() + '"> </div>';
+                $('#labels_text').append(el);
+
+				points.add({
+	  			  	position: Cesium.Cartesian3.fromDegrees(lon, lat),
+					color: Cesium.Color.RED,
+					outlineColor: Cesium.Color.BLACK,
+					outlineWidth: 1,
+					pixelSize: 10
+	  		  	})
+
+				label_index = label_index + 1;
+	        }
+	  }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+    </script>
+  </body>
+</html>

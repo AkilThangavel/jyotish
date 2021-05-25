@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Admin Panel</title>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-noty/2.3.7/packaged/jquery.noty.packaged.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js"></script>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.min.css">
+        <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.4.0/animate.min.css">
+    </head>
+
+    {% load static %}
+
+    <style>
+        .vertical-center {
+            min-height: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        form {
+            width: 700px;
+        }
+        @media only screen and (max-width: 700px) {
+            form {
+                width: 100%;
+            }
+        }
+
+        .person-label {
+            font-weight: bold;
+        }
+
+        input {
+            resize: none;
+        }
+
+        .btn-circle.btn-xl {
+            width: 70px;
+            height: 70px;
+            border-radius: 35px;
+            font-size: 24px;
+            line-height: 1.33;
+        }
+
+        .btn-fixed {
+            position: fixed;
+            top: 80%;
+            left: 80%;
+        }
+
+        .modal-xl {
+            width: 80%;
+            max-width: 735px;
+        }
+
+        .modal{
+            z-index: 20;
+        }
+        .modal-backdrop{
+            z-index: 10;
+        }
+
+        .navbar-dark, .navbar, .navbar-expand {
+            background-color: #293462;
+        }
+
+        .bg {
+            height: 100%;
+            background-image: url({% static "/images/bg.svg" %});
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
+        }
+
+        body, html {
+            height: 100%;
+        }
+    </style>
+
+    <body>
+        <datalist id="gender_list">
+            <option value="Male"></option>
+            <option value="Female"></option>
+        </datalist>
+
+        <nav class="navbar navbar-expand-lg navbar-dark d-flex flex-row justify-content-between" role="navigation">
+    			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+    				<span class="navbar-toggler-icon"></span>
+    			</button>
+    			<div class="collapse navbar-collapse" id="navbarMain">
+    				<div class="navbar-nav d-flex justify-content-between w-100">
+                        <div class="d-flex">
+                            <div class="text-center" style="width: 300px">
+                                <a class="navbar-brand" href="index">JyotishMaps</a>
+                            </div>
+                            <li class="nav-item dropdown">
+        						<a class="nav-link dropdown-toggle" href="#" id="navbarDropDown1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        						  My World
+        						</a>
+        						<div class="dropdown-menu" aria-labelledby="navbarDropDown1">
+        							<a class="dropdown-item nav-item nav-link text-dark" href="relocation_map_input">Places</a>
+        							<a class="dropdown-item nav-item nav-link text-dark" href="map_sessions">Sessions</a>
+        						</div>
+        					</li>
+                            <a class="nav-item nav-link" href="videos">Videos</a>
+        					{% if user.is_superuser %}
+        						<a class="nav-item nav-link" href="persons_list">Persons</a>
+        					{% endif %}
+                            {% if user.is_superuser %}
+        						<a class="nav-item nav-link" href="admin_panel">Admin panel</a>
+        					{% endif %}
+                            {% if user.is_superuser %}
+        						<a class="nav-item nav-link" href="admin_settings">Settings</a>
+        					{% endif %}
+                        </div>
+                        <div class="d-flex">
+                            <button class="btn rounded" type="button" onclick="window.location = 'logout'" style="background-color: #ec9b3b;">Logout</button>
+                        </div>
+    				</div>
+    			</div>
+    	</nav>
+
+        <div class="bg">
+            <script>
+                {% if messages %}
+                    {% for m in messages %}
+                        $.notify("{{m.message}}", "error");
+                    {% endfor %}
+                {% endif %}
+            </script>
+
+            <div id="modalAdd" class="modal fade" role="dialog">
+                <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Add user</h4>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+
+                        <div class="modal-body">
+                            <form action="#" method="POST">{% csrf_token %}
+                                <div class="col">
+                                    <div class="container-fluid">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <label class="person-label mb-0">Name</label>
+                                                <input type="text" class="form-control" id="nameAdd" name="nameAdd" placeholder="Name" maxlength=32 required>
+                                            </div>
+                                            <div class="col-3 p-0">
+                                                <label class="mb-0">Birthdate</label>
+                                                <input type="date" class="form-control" id="dateAdd" name="dateAdd" min="1000-01-01" max="2029-12-31" required>
+                                            </div>
+                                            <div class="col-3">
+                                                <label class="mt-0 mb-0">Birthtime</label>
+                                                <input type="time" class="form-control" id="timeAdd" name="timeAdd" required>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label class="mt-1 mb-0">Place of birth</label>
+                                                <input type="text" class="form-control" id="autocomplete1" name="autocomplete1" placeholder="Type country, city" onfocus="geolocate()" required>
+                                            </div>
+                                            <div class="col-2 pl-0">
+                                                <label class="mt-1 mb-0">Gender</label>
+                                                <input list="gender_list" class="form-control" id="genderAdd" name="genderAdd" required>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label class="mt-1 mb-0">Username</label>
+                                                <input type="text" class="form-control" id="usernameAdd" name="usernameAdd" required>
+                                            </div>
+                                            <div class="col">
+                                                <label class="mt-1 mb-0">Password</label>
+                                                <input type="text" class="form-control" id="passwordAdd" name="passwordAdd" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="container-fluid">
+                                        <button class="btn btn-block btn-primary mt-3 mb-3" type="submit">Add</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="modalEdit" class="modal fade" role="dialog">
+                <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Edit user</h4>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+
+                        <div class="modal-body">
+                            <form action="#" method="POST">{% csrf_token %}
+                                <div class="col">
+                                    <div class="container-fluid">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <label class="person-label mb-0">Name</label>
+                                                <input type="text" class="form-control" id="nameEdit" name="nameEdit" placeholder="Name" maxlength=32 required>
+                                            </div>
+                                            <div class="col-3 p-0">
+                                                <label class="mb-0">Birthdate</label>
+                                                <input type="date" class="form-control" id="dateEdit" name="dateEdit" min="1000-01-01" max="2029-12-31" required>
+                                            </div>
+                                            <div class="col-3">
+                                                <label class="mt-0 mb-0">Birthtime</label>
+                                                <input type="time" class="form-control" id="timeEdit" name="timeEdit" required>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label class="mt-1 mb-0">Place of birth</label>
+                                                <input type="text" class="form-control" id="autocomplete2" name="autocomplete2" placeholder="Type country, city" onfocus="geolocate()" required>
+                                            </div>
+                                            <div class="col-2 pl-0">
+                                                <label class="mt-1 mb-0">Gender</label>
+                                                <input list="gender_list" class="form-control" id="genderEdit" name="genderEdit" required>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label class="mt-1 mb-0">Username</label>
+                                                <input type="text" class="form-control" id="usernameEdit" name="usernameEdit" required>
+                                            </div>
+                                            <div class="col">
+                                                <label class="mt-1 mb-0">Password</label>
+                                                <input type="text" class="form-control" id="passwordEdit" name="passwordEdit" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="container-fluid">
+                                        <button class="btn btn-block btn-primary mt-3 mb-3" type="submit">Save</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="col">
+                                <div class="container-fluid">
+                                    <div class="row">
+                                        <div class="col">
+                                            <h5>Links to videos</h5>
+
+                                            <div id="video_links"></div>
+
+                                            <div class="row mt-2">
+                                                <div class="col">
+                                                    <button class="btn mr-2 btn-success" type="button" name="button" onclick="add_user_video_link()">Add Link</button>
+                                                    <button class="btn btn-primary" type="button" name="button" onclick="save_video_links()">Save</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="justify-content-center">
+                <button class="btn btn-success btn-xl btn-circle btn-fixed" data-toggle="modal" data-target="#modalAdd">+</button>
+
+                <div class="col mx-auto" style="width: 1000px">
+                    {% for user in users %}
+                        <div class="d-flex m-1 p-1 justify-content-between bg-dark rounded text-white">
+                            <div class="d-flex" style="width: 60%">
+                                <p id="name" class="mt-auto mb-auto ml-3">{{user.0}}</p>
+                            </div>
+                            <div class="d-flex" style="width: 30%">
+                                <p id="username" class="d-flex mt-auto mb-auto">{{user.1}}</p>
+                            </div>
+                            <div class="d-flex" style="width: 10%">
+                                <p id="gender" class="d-flex mt-auto mb-auto">{{user.2}}</p>
+                            </div>
+
+                            <p id="password" hidden class="mt-auto mb-auto">{{user.3}}</p>
+                            <p id="place" hidden class="mt-auto mb-auto">{{user.4}}</p>
+                            <p id="time" hidden class="mt-auto mb-auto">{{user.5}}</p>
+                            <p id="date" hidden class="mt-auto mb-auto">{{user.6}}</p>
+                            <div class="d-flex">
+                                <button class="btn btn-warning rounded mr-1 user-edit" type="button" name="button" data-toggle="modal" data-target="#modalEdit">Edit</button>
+                                <button onclick="delete_user('{{user.1}}', this)" class="btn btn-danger rounded" type="button" name="button">x</button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <script>
+                    var placeSearch, autocomplete1, autocomplete2;
+
+                    function initAutocomplete() {
+                        autocomplete1 = new google.maps.places.Autocomplete((document.getElementById('autocomplete1')), {types: ['geocode']});
+                        autocomplete2 = new google.maps.places.Autocomplete((document.getElementById('autocomplete2')), {types: ['geocode']});
+                    }
+
+                    function geolocate1() {
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(function(position) {
+                                var geolocation = {
+                                    lat: position.coords.latitude,
+                                    lng: position.coords.longitude
+                                };
+                                var circle = new google.maps.Circle({
+                                    center: geolocation,
+                                    radius: position.coords.accuracy
+                                });
+                                autocomplete1.setBounds(circle.getBounds());
+                            });
+                        }
+                    }
+
+                    function geolocate2() {
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(function(position) {
+                                var geolocation = {
+                                    lat: position.coords.latitude,
+                                    lng: position.coords.longitude
+                                };
+                                var circle = new google.maps.Circle({
+                                    center: geolocation,
+                                    radius: position.coords.accuracy
+                                });
+                                autocomplete2.setBounds(circle.getBounds());
+                            });
+                        }
+                    }
+                </script>
+                <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASsKRcBk1D1J_oWy7teTjodHQ5N1uOl1M&libraries=places&callback=initAutocomplete" async defer></script>
+
+                <script>
+                    function edit_load_links(username) {
+                        $.ajax({
+            				url: '/ajax/edit_video_links/',
+            				data: {'username': username},
+            				dataType: 'json',
+            				success: function(data) {
+            					$('#video_links').html(data.html);
+            				},
+            				error: function(data) {
+                                $.notify("Links were not loaded!", "error");
+                            }
+            			});
+                    }
+
+                    function remove_link(lid, el) {
+                        $.ajax({
+            				url: '/ajax/delete_user_video_link/',
+            				data: {'link_id': lid},
+            				dataType: 'json',
+            				success: function(data) {
+            					$(el).parent().remove();
+            				},
+            				error: function(data) {
+                                $.notify("Link was not deleted due to an error!", "error");
+                            }
+            			});
+                    }
+
+                    function add_user_video_link() {
+                        var username = $('#modalEdit #usernameEdit').val();
+
+                        $.ajax({
+            				url: '/ajax/add_user_video_link/',
+            				data: {'username': username},
+            				dataType: 'json',
+            				success: function(data) {
+                                var lid = "'" + data.link_id + "'";
+                                var video_link = '<div class="d-flex video-link mt-1 mb-1">';
+                                video_link += '<input id="link_name" type="text" class="form-control mr-1" name="" value="" placeholder="Name for link">';
+                                video_link += '<input id="link_url" type="text" class="form-control" name="" value="" placeholder="Url">';
+                                video_link += '<input id="link_id" type="text" name="" value="' + data.link_id + '" hidden>';
+                                video_link += '<textarea class="form-control" id="link_desc"></textarea>'
+                                video_link += '<button onclick="remove_link(' + lid + ', this)" class="btn btn-danger" type="button" name="button">x</button>';
+                                video_link += '</div>';
+                                $('#video_links').append(video_link);
+            				},
+            				error: function(data) {
+                                $.notify("Link was not added due to an error!", "error");
+                            }
+            			});
+                    }
+
+                    function save_video_links() {
+                        var state = false;
+                        var username = $('#modalEdit #usernameEdit').val();
+
+                        $('.video-link').each(function(id, el) {
+                            var link_id = $(el).find('#link_id').val();
+                            var link_url = $(el).find('#link_url').val();
+                            var link_name = $(el).find('#link_name').val();
+                            var link_desc = $(el).find('#link_desc').val();
+
+                            $.ajax({
+                				url: '/ajax/save_video_link/',
+                				data: {'username': username, 'link_id': link_id, 'link_url': link_url, 'link_name': link_name, 'link_desc': link_desc},
+                				dataType: 'json'
+                			});
+                            state = true;
+                        });
+
+                        if (state) {
+                            $.notify("Links were saved!", "success");
+                        } else {
+                            $.notify("Links were not saved due to an error!", "error");
+                        }
+                    }
+
+
+                    $('.user-edit').on('click', function() {
+                        var vals = $(this).parent().parent();
+                        $('#modalEdit #nameEdit').val($(vals).find('#name').text());
+                        $('#modalEdit #dateEdit').val($(vals).find('#date').text());
+                        $('#modalEdit #timeEdit').val($(vals).find('#time').text());
+                        $('#modalEdit #autocomplete2').val($(vals).find('#place').text());
+                        $('#modalEdit #genderEdit').val($(vals).find('#gender').text());
+                        $('#modalEdit #usernameEdit').val($(vals).find('#username').text());
+                        $('#modalEdit #passwordEdit').val($(vals).find('#password').text());
+
+                        edit_load_links($(vals).find('#username').text());
+                    });
+
+                    function delete_user(username, el) {
+                        $(el).parent().parent().remove();
+
+                        $.ajax({
+            				url: '/ajax/delete_user/',
+            				data: {'username': username},
+            				dataType: 'json',
+            				success: function(data) {
+            					$.notify("User <" + username + "> was deleted!", "success");
+            				},
+            				error: function(data) {
+                                $.notify("User was not deleted due to an error!", "error");
+                            }
+            			});
+                    }
+                </script>
+            </div>
+        </div>
+    </body>
+</html>

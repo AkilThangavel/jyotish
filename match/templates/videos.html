@@ -1,0 +1,102 @@
+<!DOCTYPE html >
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Videos and PDF</title>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" crossorigin="anonymous">
+    </head>
+
+	{% load static %}
+
+    <style>
+        .vertical-center {
+            min-height: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+		.navbar-dark, .navbar, .navbar-expand {
+            background-color: #293462;
+        }
+
+		body, html {
+            height: 100%;
+        }
+
+        .bg {
+            height: 100%;
+            background-image: url({% static "/images/bg.svg" %});
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
+        }
+    </style>
+
+    <body>
+		<nav class="navbar navbar-expand-lg navbar-dark d-flex flex-row justify-content-between" role="navigation">
+				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarMain">
+					<div class="navbar-nav d-flex justify-content-between w-100">
+						<div class="d-flex">
+							<div class="text-center" style="width: 300px">
+								<a class="navbar-brand" href="index">JyotishMaps</a>
+							</div>
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle" href="#" id="navbarDropDown1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								  My World
+								</a>
+								<div class="dropdown-menu" aria-labelledby="navbarDropDown1">
+									<a class="dropdown-item nav-item nav-link text-dark" href="relocation_map_input">Places</a>
+									<a class="dropdown-item nav-item nav-link text-dark" href="map_sessions">Sessions</a>
+								</div>
+							</li>
+							<a class="nav-item nav-link" href="videos">Videos</a>
+							{% if user.is_superuser %}
+								<a class="nav-item nav-link" href="persons_list">Persons</a>
+							{% endif %}
+							{% if user.is_superuser %}
+								<a class="nav-item nav-link" href="admin_panel">Admin panel</a>
+							{% endif %}
+							{% if user.is_superuser %}
+								<a class="nav-item nav-link" href="admin_settings">Settings</a>
+							{% endif %}
+						</div>
+						<div class="d-flex">
+							<button class="btn btn-dark rounded" type="button" onclick="window.location = 'logout'" style="background-color: #ec9b3b;">Logout</button>
+						</div>
+
+					</div>
+				</div>
+		</nav>
+
+        <div>
+            <div class="container text-center">
+                <p></p>
+                <div class="row">
+                    <div class="col">
+                        <h2 class="m-4 text-dark">Videos</h2>
+
+                        <div id="sessions" class="d-flex flex-column mx-auto">
+                            {% for link in links %}
+								<div class="d-flex flex-column rounded border mx-auto" style="width: 540px; padding-top: 20px">
+									<iframe frameborder="0" allowfullscreen class="mx-auto" width="500" height="400" src="{{link.1}}"></iframe>
+									<b>{{link.0}}</b>
+									<p style="text-align: left; word-wrap: break-word;" class="m-2">{{link.2}}</p>
+								</div>
+							{% empty %}
+								<h4>You have no videos yet</h4>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

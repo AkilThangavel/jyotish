@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+	<title>Relocation Map</title>
+    <script src="https://cesiumjs.org/releases/1.60/Build/Cesium/Cesium.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+    <script src='http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js'></script>
+    <link href="https://cesiumjs.org/releases/1.60/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+  </head>
+
+  <style>
+      .vertical-center {    
+        display: flex;
+        align-items: center;
+      }
+
+      html, body {
+          width: 100%;
+          height: 100%;
+      }
+
+      .label_item {
+          background-color: white;
+          color: black;
+          border: 1px solid black;
+      }
+      .label_item:hover {
+          background-color: blue;
+          color: white;
+      }
+
+	  #label_remove {
+		  font-size: 10pt;
+	  }
+
+	  #labels_save {
+		  background-color: #01828a;
+		  color: white;
+		  font-size: 16pt;
+	  }
+
+	  #labels_save:hover {
+		  filter: brightness(0.8);
+	  }
+
+	  .navbar-dark, .navbar, .navbar-expand {
+		  background-color: #293462;
+	  }
+
+	  .cesium-viewer-geocoderContainer {
+		  margin-right: 15px;
+	  }
+  </style>
+
+  {% load static %}
+
+  <body style="overflow: hidden">
+	  <nav class="navbar navbar-expand-lg navbar-dark d-flex flex-row justify-content-between" role="navigation">
+			  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+				  <span class="navbar-toggler-icon"></span>
+			  </button>
+			  <div class="collapse navbar-collapse" id="navbarMain">
+				  <div class="navbar-nav d-flex justify-content-between w-100">
+					  <div class="d-flex">
+						  <div class="text-center" style="width: 283px">
+							  <a class="navbar-brand" href="index">JyotishMaps</a>
+						  </div>
+						  <li class="nav-item dropdown">
+							  <a class="nav-link dropdown-toggle" href="#" id="navbarDropDown1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								My World
+							  </a>
+							  <div class="dropdown-menu" aria-labelledby="navbarDropDown1">
+								  <a class="dropdown-item nav-item nav-link text-dark" href="relocation_map_input">Places</a>
+								  <a class="dropdown-item nav-item nav-link text-dark" href="map_sessions">Sessions</a>
+							  </div>
+						  </li>
+						  <a class="nav-item nav-link" href="videos">Videos</a>
+						  {% if user.is_superuser %}
+							  <a class="nav-item nav-link" href="persons_list">Persons</a>
+						  {% endif %}
+						  {% if user.is_superuser %}
+							  <a class="nav-item nav-link" href="admin_panel">Admin panel</a>
+						  {% endif %}
+						  {% if user.is_superuser %}
+							  <a class="nav-item nav-link" href="admin_settings">Settings</a>
+						  {% endif %}
+					  </div>
+					  <div class="d-flex">
+						  <button class="btn btn-dark rounded" type="button" onclick="window.location = 'logout'" style="background-color: #ec9b3b;">Logout</button>
+					  </div>
+				  </div>
+			  </div>
+	  </nav>
+
+    <div class="container-fluid m-0 p-0">
+        <div class="row">
+            <div class="text-center" style="position: absolute; left: 0; z-index: 1; height: 100%">
+                <button id="labels_save" class="btn btn-block rounded-0" type="button" name="button">Save Session</button>
+
+                <div id="labels_text" style="width: 300px; overflow-y: auto; background-color: #ec9b3b; height: 90%;">
+                    <h4 class="mb-4 pt-4">Add Places</h4>
+
+					{% for lbl in labels %}
+						<div class="m-2 p-1 rounded label_item d-flex flex-row">
+							<div class="d-flex">
+								<textarea class="form-control ta" style="width: 220px; min-height: 65px; line-height: 1; font-size: 11pt;" value="{{lbl.0}}">{{lbl.0}}</textarea>
+							</div>
+							<div class="d-flex flex-column">
+								<button class="m-1 label_remove" type="button" onclick="remove_label(this)">x</button>
+								<button class="m-1" style="font-size: 10pt" type="button" onclick="show_label(this)">Go</button>
+							</div>
+							<input hidden id="c" type="text" value="{{lbl.1}}_____{{lbl.2}}">
+						</div>
+					{% endfor %}
+                </div>
+
+                <div class="" style="position: absolute; left: 300px; height: 100%; bottom: 0; width: 150px">
+					<div id="natal_chart" style="position: absolute; left: 60px; bottom: 70px; display: none">
+                        {{report_txts|safe}}
+						<button id="close_natal_chart" type="button" name="button">x</button>
+                    </div>
+
+                    <button id="labels_btn" style="width: 40px; height: 40px; position: absolute; top: calc(50% - 35px); left: 0; border-bottom-right-radius: 10px; border-top-right-radius: 10px; outline: none; background-color: white; user-select: none" type="button" name="button"><</button>
+					<button id="show_natal_chart" class="btn m-1 btn-warning" style="position: absolute; bottom: 70px; left: 20px" type="button">Natal Chart</button>
+				</div>
+            </div>
+
+            <div class="col pr-0" style="background-color: black; height: 800px;">
+                <div id="cesiumContainer"></div>
+            </div>
+
+            <div class="h-75" style="background-color: transparent; position: absolute; right: 0; top: 300px">
+                <div class="d-column vertical-center">
+                    <div id="legend" class="container">
+                        <div class="legend-leg bg-white rounded mb-2 row" style="width: 100px">
+                            <div class="col p-1 w-50 mr-1">
+                                <svg style="width: 50px" viewBox="-3 0 133 20" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0" y1="1" x2="40" y2="1" stroke-width="15" stroke="blue"/>
+                                    <line x1="50" y1="1" x2="60" y2="1" stroke-width="15" stroke="blue"/>
+                                    <line x1="70" y1="1" x2="110" y2="1" stroke-width="15" stroke="blue"/>
+                                    <line x1="120" y1="1" x2="130" y2="1" stroke-width="15" stroke="blue"/>
+                                </svg>
+                                <svg style="width: 50px" viewBox="-3 0 133 20" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0" y1="1" x2="25" y2="1" stroke-width="15" stroke="blue"/>
+                                    <line x1="40" y1="1" x2="65" y2="1" stroke-width="15" stroke="blue"/>
+                                    <line x1="80" y1="1" x2="105" y2="1" stroke-width="15" stroke="blue"/>
+                                </svg>
+                                <svg style="width: 50px" viewBox="-3 0 133 20" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0" y1="1" x2="50" y2="1" stroke-width="30" stroke="blue"/>
+                                    <line x1="70" y1="1" x2="120" y2="1" stroke-width="30" stroke="blue"/>
+                                </svg>
+                                <svg style="width: 50px" viewBox="-3 0 133 20" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="20" y1="1" x2="90" y2="1" stroke-width="15" stroke="blue"/>
+                                    <line x1="100" y1="1" x2="115" y2="1" stroke-width="15" stroke="blue"/>
+
+                                </svg>
+                                <svg style="width: 50px" viewBox="-3 0 133 20" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="20" y1="1" x2="100" y2="1" stroke-width="15" stroke="blue"/>
+                                </svg>
+                                <svg style="width: 50px" viewBox="-3 0 133 20" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="20" y1="1" x2="120" y2="1" stroke-width="30" stroke="blue"/>
+                                </svg>
+                                <svg style="width: 50px" viewBox="-3 0 133 20" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0" y1="1" x2="10" y2="1" stroke-width="30" stroke="blue"/>
+                                    <line x1="20" y1="1" x2="25" y2="1" stroke-width="30" stroke="blue"/>
+                                    <line x1="35" y1="1" x2="40" y2="1" stroke-width="30" stroke="blue"/>
+                                    <line x1="60" y1="1" x2="70" y2="1" stroke-width="30" stroke="blue"/>
+                                    <line x1="80" y1="1" x2="85" y2="1" stroke-width="30" stroke="blue"/>
+                                    <line x1="95" y1="1" x2="100" y2="1" stroke-width="30" stroke="blue"/>
+                                </svg>
+                                <svg style="width: 50px" viewBox="-3 0 133 20" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0" y1="1" x2="10" y2="1" stroke-width="30" stroke="blue"/>
+                                    <line x1="20" y1="1" x2="30" y2="1" stroke-width="30" stroke="blue"/>
+                                    <line x1="40" y1="1" x2="50" y2="1" stroke-width="30" stroke="blue"/>
+                                    <line x1="60" y1="1" x2="70" y2="1" stroke-width="30" stroke="blue"/>
+                                    <line x1="80" y1="1" x2="90" y2="1" stroke-width="30" stroke="blue"/>
+                                    <line x1="100" y1="1" x2="110" y2="1" stroke-width="30" stroke="blue"/>
+                                </svg>
+                            </div>
+                            <div class="col p-1">
+                                <p class="mt-0 mb-0">60<</p>
+                                <p class="mt-0 mb-0">90<</p>
+                                <p class="mt-0 mb-0">120<</p>
+                                <p class="mt-0 mb-0">>60</p>
+                                <p class="mt-0 mb-0">>90</p>
+                                <p class="mt-0 mb-0">>120</p>
+                                <p class="mt-0 mb-0">>150</p>
+                                <p class="mt-0 mb-0">180</p>
+                            </div>
+                        </div>
+                        <div class="legend-col"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+		<div id="labels_saved_already" hidden>{{already_yes}}</div>
+    </div>
+
+
+	<script>
+		var nc_v = 0;
+
+		$('#show_natal_chart').on('click', function() {
+			$('#natal_chart').css('display', '');
+			$(this).css('display', 'none');
+			$('#show_natal_chart').parent().css('width', '500px');
+			nc_v = 1;
+		});
+
+		$('#close_natal_chart').on('click', function() {
+			$('#show_natal_chart').css('display', '');
+			$('#natal_chart').css('display', 'none');
+			$('#show_natal_chart').parent().css('width', '150px');
+			nc_v = 0;
+		});
+	</script>
+
+    <script>
+        $('#labels_save').click(function() {
+			var data = [];
+
+			$('#labels_text div.label_item').each(function(i, el) {
+				var t = $(el).find('textarea.ta').val();
+				var c = $(el).find('#c').val();
+				var tc = t + '_____' + c;
+				data.push(tc);
+			});
+
+			var user_name = "{{user_name}}";
+
+            $.ajax({
+				url: '/ajax/save_labels/',
+				data: {'labels[]': data, 'user': user_name, 'already': $('#labels_saved_already').html()},
+				dataType: 'json',
+				success: function(data) {
+					$.notify("Labels for session were just saved!", "success");
+				},
+				error: function(data) {
+                    $.notify("Session was not saved due to an error!", "error");
+                }
+			});
+
+			$('#labels_saved_already').html('yes');
+        });
+
+        $('#labels_btn').click(function() {
+            if ($(this).text() == "<") {
+                $('#labels_text').hide();
+                $(this).parent().css('left', "0");
+                $(this).html('>');
+            } else {
+                $('#labels_text').show();
+                $(this).parent().css('left', "300px");
+                $(this).html('<');
+            }
+        });
+    </script>
+
+    <script>
+      function deg_to_rad(deg) {
+          return deg * Math.PI / 180;
+      }
+
+      function rad_to_deg(rad) {
+          return rad * 180 / Math.PI;
+      }
+
+      function lat_lon_to_xyz(lat, lon) {
+          var c = Cesium.Cartesian3.fromDegrees(lon, lat);
+          return [c.x, c.y, c.z];
+      }
+
+      function xyz_to_lat_lon(x, y, z) {
+          var c = Cesium.Cartesian3.fromElements(x, y, z);
+          var cart = Cesium.Cartographic.fromCartesian(c);
+          return [cart.longitude, cart.latitude];
+      }
+
+      function rotate_point(x, y, z, u, v, w, deg) {
+          var rad = deg_to_rad(deg);
+
+          var cr = Math.cos(rad);
+          var sr = Math.sin(rad);
+          var uvws = (u * x + v * y + w * z) * (1 - cr);
+          var uvws2 = u ** 2 + v ** 2 + w ** 2;
+          var suvws2 = Math.sqrt(uvws2);
+
+          var nx = (u * uvws + uvws2 * x * cr + suvws2 * (-w * y + v * z) * sr) / uvws2;
+          var ny = (v * uvws + uvws2 * y * cr + suvws2 * (w * x - u * z) * sr) / uvws2;
+          var nz = (w * uvws + uvws2 * z * cr + suvws2 * (-v * x + u * y) * sr) / uvws2;
+
+          return [nx, ny, nz];
+      }
+
+      Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkNDRiYWYyZi04NTk4LTQ5OGItOTg0MS1hNDUzMjE0YjdiMzciLCJpZCI6MTQ5MDksInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1NjY2NzA0NTl9.6hTdETOJ7y9aJuzgu9avXRPJU5mMO_PqVWhMOgbeBWg';
+
+
+
+
+
+      var viewer = new Cesium.Viewer('cesiumContainer', {
+	        'timeline': false,
+	        'selectionIndicator': false,
+	        'geocoder': true,
+	        'vrButton': false,
+	        'fullscreenButton': false,
+	        'navigationHelpButton': false,
+	        'navigationInstructionsInitiallyVisible': false,
+	        'animation': false,
+	        'orderIndependentTranslucency': false,
+			'homeButton': false,
+			'baseLayerPicker': true,
+			'sceneModePicker': false,
+			'imageryProvider': false,
+	        'imageryProvider': Cesium.createWorldImagery({
+	        	style : Cesium.IonWorldImageryStyle.AERIAL_WITH_LABELS
+	    	}),
+			// 'imageryProviderViewModels': providerViewModels,
+   		 	// 'selectedImageryProviderViewModel': providerViewModels[0]
+      });
+
+
+	  var points = viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection());
+
+      {% autoescape off %}
+	      {{polygons}}
+      {% endautoescape %}
+
+
+
+	  // Find xyz coordinates for start and opposite points
+      var start_p = lat_lon_to_xyz(cla, clo);
+      var sx = start_p[0];
+      var sy = start_p[1];
+      var sz = start_p[2];
+
+      var ox = -sx;
+      var oy = -sy;
+      var oz = -sz;
+
+      var oc3 = Cesium.Cartesian3.fromElements(ox, oy, oz);
+      var cart = Cesium.Cartographic.fromCartesian(oc3);
+      var ola = rad_to_deg(cart.latitude);
+      var olo = rad_to_deg(cart.longitude);
+
+	  var lines_navamshi = [];
+	  for (i = 0; i < 27; i++) {
+		  var xyz = rotate_point(0, 0, 6371000, sx, sy, sz, 60 + i * 360 / 27);
+		  var c = Cesium.Cartesian3.fromElements(xyz[0], xyz[1], xyz[2]);
+		  var cart = Cesium.Cartographic.fromCartesian(c);
+		  var lattt = rad_to_deg(cart.latitude);
+		  var lonnn = rad_to_deg(cart.longitude);
+
+		  var line = viewer.entities.add({
+			  polyline: {
+				  positions: Cesium.Cartesian3.fromDegreesArray([
+					  clo, cla,
+					  lonnn, lattt,
+					  olo, ola
+				  ]),
+				  width: 1,
+				  material: new Cesium.PolylineDashMaterialProperty({
+					  color: Cesium.Color.LIGHTBLUE,
+					  gapColor: Cesium.Color.LIGHTBLUE,
+					  dashLength: 12.0
+				  })
+			  },
+			  show: false
+		  });
+		  lines_navamshi.push(line);
+	  }
+
+      var label_index = 0;
+
+	  var labels = [];
+
+	  {% if labels %}
+		  {% for lbl in labels %}
+			  var lon = {{lbl.2}};
+			  var lat = {{lbl.1}};
+
+			  points.add({
+					position: Cesium.Cartesian3.fromDegrees(lon, lat),
+					color: Cesium.Color.RED,
+					outlineColor: Cesium.Color.BLACK,
+					outlineWidth: 1,
+					pixelSize: 10
+				 })
+		  {% endfor %}
+	  {% endif %}
+
+	  function remove_label(btn, idx) {
+		  var idx = $('.label_remove').index(btn);
+		  $(btn).closest('.label_item').remove();
+		  points.remove(points.get(idx));
+		  label_index = label_index - 1;
+	  }
+
+	  function show_label(btn) {
+		  var lat_lon = $(btn).parent().parent().find('#c').val().split('_____');
+
+		  var lat = lat_lon[0] * 1;
+		  var lon = lat_lon[1] * 1;
+
+		  var center = Cesium.Cartesian3.fromDegrees(lon, lat);
+		  viewer.camera.flyTo({destination: center, duration: 1.0, maximumHeight: 10000});
+	  }
+
+
+	  var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+	  handler.setInputAction(function(click) {
+			var ellipsoid = viewer.scene.globe.ellipsoid;
+	        var scene = viewer.scene;
+			var ray = scene.camera.getPickRay(click.position);
+			var pos = scene.globe.pick(ray,scene);
+
+	        if (true) {
+				var cartographic = ellipsoid.cartesianToCartographic(pos);
+                var lon = Cesium.Math.toDegrees(cartographic.longitude).toFixed(10);
+                var lat = Cesium.Math.toDegrees(cartographic.latitude).toFixed(10);
+
+                var el = '<div class="m-2 p-1 rounded label_item d-flex flex-row"> <div class="d-flex"><textarea class="form-control ta" style="width: 220px; min-height: 65px"></textarea></div> <div class="d-flex flex-column"><button class="m-1 label_remove" type="button" onclick="remove_label(this, ' + label_index.toString() + ')">x</button><button onclick="show_label(this)" class="m-1" style="font-size: 10pt" type="button">Go</button></div> <input hidden id="c" type="text" value="' + lat.toString() + '_____' + lon.toString() + '"> </div>';
+                $('#labels_text').append(el);
+
+				points.add({
+	  			  	position: Cesium.Cartesian3.fromDegrees(lon, lat),
+					color: Cesium.Color.RED,
+					outlineColor: Cesium.Color.BLACK,
+					outlineWidth: 1,
+					pixelSize: 10
+	  		  	})
+
+				label_index = label_index + 1;
+	        }
+	  }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+
+      // Find central point between origin and opposite
+      var mx = Math.cos(deg_to_rad(cla)) + Math.cos(deg_to_rad(clo));
+      var my = Math.cos(deg_to_rad(cla)) + Math.sin(deg_to_rad(clo));
+      var mz = Math.sin(deg_to_rad(cla));
+
+      mx = mx + Math.cos(deg_to_rad(ola)) + Math.cos(deg_to_rad(olo));
+      my = my + Math.cos(deg_to_rad(ola)) + Math.sin(deg_to_rad(olo));
+      mz = mz + Math.sin(deg_to_rad(ola));
+
+      mx = mx;
+      my = my;
+      mz = mz;
+
+      var c3m = Cesium.Cartesian3.fromElements(mx, my, mz);
+      var cart = Cesium.Cartographic.fromCartesian(c3m);
+      var mla = cart.latitude;
+      var mlo = cart.longitude;
+
+      // Calculate positions of points
+      // Role of the xyz of custom axis will play xyz of starting point (so easy is that, yes)
+      var vs = [];
+      for (i = 0; i < 12; i++) {
+          xyz = rotate_point(0, 0, 6371000, sx, sy, sz, 30 * i);
+          var c = Cesium.Cartesian3.fromElements(xyz[0], xyz[1], xyz[2]);
+          var cart = Cesium.Cartographic.fromCartesian(c);
+          var la = rad_to_deg(cart.latitude);
+          var lo = rad_to_deg(cart.longitude);
+          vs.push([lo, la]);
+      }
+
+      var signs = "Cp.Sg.Sc.Li.Vg.Le.Ca.Ge.Ta.Ar.Pi.Aq".split('.');
+      var sds = [1500, 2700, 4500, 9000, 18000, 34000, 67000, 132000, 280000, 590000, 1200000, 2500000, 5300000, 11000000, 2400000, 5000000, 10000000];
+      var eds = [1900, 3200, 5200, 12000, 30000, 40000, 82000, 150000, 312000, 640000, 1300000, 2730000, 5600000, 12000000, 2700000, 5800000, 20000000];
+
+      // Here will be stored all the neccessary lines and labels
+      var map_lines = [];
+      var map_labels = [];
+      var lines = [];
+      var labels_camera = [];
+
+      var lcam_pos = [];
+      var lcam_deg = [];
+
+      // Rotate central point around earth's globe
+      for (i = 0; i < 12; i++) {
+          var lo1 = vs[i][0];
+          var la1 = vs[i][1];
+
+          if (i < 11) {
+              var lo2 = vs[i + 1][0];
+              var la2 = vs[i + 1][1];
+          } else {
+              var lo2 = vs[0][0];
+              var la2 = vs[0][1];
+          }
+
+          if (i % 2 == 0) {
+              var col = Cesium.Color.RED.withAlpha(0.02);
+          } else {
+              var col = Cesium.Color.BLUE.withAlpha(0.02);
+          }
+
+          viewer.entities.add({
+              polyline: {
+                  positions: Cesium.Cartesian3.fromDegreesArray([
+                      clo, cla,
+                      lo1, la1,
+                      olo, ola
+                  ]),
+                  width: 2,
+                  material: new Cesium.PolylineDashMaterialProperty({
+                      color: Cesium.Color.RED,
+                      gapColor: Cesium.Color.TRANSPARENT,
+                      dashLength: 12.0
+                  })
+              }
+          });
+
+          viewer.entities.add({
+              polyline: {
+                  positions: Cesium.Cartesian3.fromDegreesArray([
+                      clo, cla,
+                      lo2, la2,
+                      olo, ola
+                  ]),
+                  width: w,
+                  material: new Cesium.PolylineDashMaterialProperty({
+                      color: Cesium.Color.RED,
+                      gapColor: Cesium.Color.TRANSPARENT,
+                      dashLength: 12.0
+                  })
+              }
+          });
+
+          for (j = 0; j < sds.length - 1; j++) {
+              // var l = Cesium.Cartesian3.fromDegrees(vs[i][0], vs[i][1]);
+              // var lxy = rotate_point(l.x, l.y, l.z, sx, sy, sz, 105);
+              // var lxyz = rotate_point(sx, sy, sz, lxy[0], lxy[1], lxy[2], 0.002 * 2 ** j);
+              // var llalo = xyz_to_lat_lon(lxyz[0], lxyz[1], lxyz[2]);
+              // var llo = rad_to_deg(llalo[0]);
+              // var lla = rad_to_deg(llalo[1]);
+
+              var d = Cesium.Cartesian3.angleBetween(Cesium.Cartesian3.fromElements(0, 0, 6371000), Cesium.Cartesian3.fromElements(sx, sy, sz));
+              d = rad_to_deg(d);
+              // var rot = rotate_point(sx, sy, sz, 0, 0, 6371000, 90);
+              // var rotc = Cesium.Cartesian3.fromElements(rot[0], rot[1], rot[2]);
+              // var rotcart = Cesium.Cartographic.fromCartesian(rotc);
+              // var la = 0;
+              // var lo = rotcart.longitude;
+              // var axis = Cesium.Cartesian3.fromDegrees(lo, la);
+              // alert(lo);_settings
+
+              var c = Cesium.Cartesian3.fromElements(sx, sy, sz);
+              var cart = Cesium.Cartographic.fromCartesian(c);
+              var lo = rad_to_deg(cart.longitude) - 90;
+              if (lo > 180) {
+                  lo = (360 - lo) * (-1);
+              }
+              if (lo < -180) {
+                  lo = 360 + lo;
+              }
+              var axis = Cesium.Cartesian3.fromDegrees(lo, 0);
+
+              var xyz = rotate_point(0, 0, 6371000, axis.x, axis.y, axis.z, 0.002 * 2 ** j - d);
+              xyz = rotate_point(xyz[0], xyz[1], xyz[2], sx, sy, sz, 15 + 30 * i);
+              var c = Cesium.Cartesian3.fromElements(xyz[0], xyz[1], xyz[2]);
+              var cart = Cesium.Cartographic.fromCartesian(c);
+              var lla = rad_to_deg(cart.latitude);
+              var llo = rad_to_deg(cart.longitude);
+
+              viewer.entities.add({
+                  label: {
+                      text: signs[i],
+                      verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                      horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+                      translucencyByDistance: new Cesium.NearFarScalar(sds[j], 1, eds[j], 0),
+                      fillColor: Cesium.Color.BLACK,
+                      showBackground: true,
+                      backgroundColor: Cesium.Color.CHARTREUSE
+                  },
+                  position: Cesium.Cartesian3.fromDegrees(llo, lla)
+              });
+          }
+
+
+          var xyz = rotate_point(0, 0, 6371000, sx, sy, sz, 15 + 30 * i);
+          var c = Cesium.Cartesian3.fromElements(xyz[0], xyz[1], xyz[2]);
+          var cart = Cesium.Cartographic.fromCartesian(c);
+          var la = rad_to_deg(cart.latitude);
+          var lo = rad_to_deg(cart.longitude);
+
+          var line = viewer.entities.add({
+              label: {
+                  text: signs[i],
+                  verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                  horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+                  translucencyByDistance: new Cesium.NearFarScalar(5000000, 1, 100000000, 0),
+                  fillColor: Cesium.Color.BLACK,
+                  showBackground: true,
+                  backgroundColor: Cesium.Color.CHARTREUSE
+              },
+              position: Cesium.Cartesian3.fromDegrees(lo, la)
+          });
+          lines.push(line);
+
+          viewer.entities.add({
+              polygon: {
+                  hierarchy: Cesium.Cartesian3.fromDegreesArray([
+                      clo, cla,
+                      lo1, la1,
+                      lo2, la2
+                  ]),
+                  height: 0,
+                  material: col
+              }
+          });
+
+          viewer.entities.add({
+              polygon: {
+                  hierarchy: Cesium.Cartesian3.fromDegreesArray([
+                      olo, ola,
+                      lo1, la1,
+                      lo2, la2
+                  ]),
+                  height: 0,
+                  material: col
+              }
+          });
+      }
+
+      // Add planets' lines
+      var pl_cols = [
+          ["Su", Cesium.Color.YELLOW, "#FFFF00", 2],
+          ["Mo", Cesium.Color.AQUA, "#00FFFF", 2],
+          ["Me", Cesium.Color.SANDYBROWN, "#F4A460", 2],
+          ["Ma", Cesium.Color.WHITE, "#FFFFFF", 4],
+          ["Ju", Cesium.Color.DEEPSKYBLUE, "#00BFFF", 4],
+          ["Ve", Cesium.Color.FUCHSIA, "#FF00FF", 4],
+          ["Sa", Cesium.Color.BLUE, "#0000FF", 6],
+          ["Ra", Cesium.Color.BLACK, "#000000", 4],
+          ["Ke", Cesium.Color.DARKSLATEGRAY, "#2F4F4F", 4],
+          ["As", Cesium.Color.fromCssColorString("#18DE35"), "#18DE35", 3]
+      ]
+
+	  $('.legend-col').append('<div class="row text-white"><input name="lines_navamshi_checkbox" id="lines_navamshi_checkbox" type="checkbox">Nakshatras</div>');
+
+      for (i = 0; i < planets.length; i++) {
+          xyz = rotate_point(0, 0, 6371000, sx, sy, sz, -planets[i][0]);
+          var c = Cesium.Cartesian3.fromElements(xyz[0], xyz[1], xyz[2]);
+          var cart = Cesium.Cartographic.fromCartesian(c);
+          var la = rad_to_deg(cart.latitude);
+          var lo = rad_to_deg(cart.longitude);
+
+          for (j = 0; j < 10; j++) {
+              if (pl_cols[j][0] == planets[i][1]) {
+                  var col = pl_cols[j][1];
+                  var col_legend = pl_cols[j][2];
+                  var w = pl_cols[j][3];
+                  break;
+              }
+          }
+
+
+          var html = $('#legend div.legend-col').html();
+          html += '<div class="row">';
+          if (planets[i][1] != "As") {
+              html += '<input class="legend-aspect-check" type="checkbox">';
+          } else {
+              html += '<div style="width: 13px"></div>';
+          }
+          html += '<div style="width: 60px; height: 22px; background-color: ' + col_legend + ';"></div>';
+          html += '<div style="font-size: 13pt" class="text-white mt-auto mb-auto m-2 legend-aspect-name">' + planets[i][1] + '</div>';
+          html += '</div>';
+          $('#legend div.legend-col').html(html);
+
+          viewer.entities.add({
+              polyline: {
+                  positions: Cesium.Cartesian3.fromDegreesArray([
+                      clo, cla,
+                      lo, la,
+                      olo, ola
+                  ]),
+                  width: w,
+                  material: col
+              }
+          });
+
+          // Add aspect lines for every planet
+          var aspects = [-60, 60, -90, 90, -120, 120, 180];
+
+          var map_lines_one = [planets[i][1]];
+          //var lcam_pos = [];
+
+          if (planets[i][1] != "As") {
+              // For lines and labels of one planet
+              var labels = viewer.entities.add(new Cesium.Entity());
+
+              for (j = 0; j < 7; j++) {
+                  xyz = rotate_point(0, 0, 6371000, sx, sy, sz, -planets[i][0] - aspects[j]);
+
+                  var c = Cesium.Cartesian3.fromElements(xyz[0], xyz[1], xyz[2]);
+                  var cart = Cesium.Cartographic.fromCartesian(c);
+                  var la = rad_to_deg(cart.latitude);
+                  var lo = rad_to_deg(cart.longitude);
+
+                  if (aspects[j] == 180) {
+                      var lbl = planets[i][1] + "(180)";
+                  } else {
+                      if (aspects[j] < 0) {
+                          var s = aspects[j].toString();
+                          var lbl = ">" + s.slice(1, s.length) + planets[i][1];
+                      } else {
+                          var lbl = planets[i][1] + aspects[j].toString() + "<";
+                      }
+                  }
+                    
+                    // Determine which line type to use for aspect line
+                    if (aspects[j] == 60) {
+                        var dl = 32;
+                        var dp = 249;
+                        var w = 2;
+                    } else if ((aspects[j]) == -60) {
+                        var dl = 60;
+                        var dp = 249;
+                        var w = 2;
+                    }else if ((aspects[j]) == 90) {
+                        var dl = 16;
+                        var dp = 255;
+                        var w = 2;
+                    }else if ((aspects[j]) == -90) {
+                        var dl = 60;
+                        var dp = 255;
+                        var w = 2;
+                    } else if ((aspects[j]) == 120) {
+                        var dl = 32;
+                        var dp = 255;
+                        var w = 4;
+                    }else if ((aspects[j]) == -120) {
+                        var dl = 60;
+                        var dp = 255;
+                        var w = 4;
+                    } else {
+                        var dl = 8;
+                        var dp = 255;
+                        var w = 8;
+                    }
+                    function myFunction(p1, p2) {
+                        if (aspects[j] < 0) {
+                            var col = Cesium.Color.BLACK;
+                            
+                        } else {
+                            var col = Cesium.Color.BLUE;
+                        }
+                    }
+
+
+                  // Add polyline of aspect
+                  var poly = viewer.entities.add({
+                      polyline: {
+                          positions: Cesium.Cartesian3.fromDegreesArray([
+                              clo, cla,
+                              lo, la,
+                              olo, ola
+                          ]),
+                          width: w,
+                          material: new Cesium.PolylineDashMaterialProperty({
+                              color: col,
+                              gapColor: Cesium.Color.TRANSPARENT,
+                              dashLength: dl,
+                              dashPattern: dp
+                          })
+                      }
+                  });
+                  map_lines_one.push(poly);
+
+                  // Add labels
+                  for (n = 0; n < sds.length - 1; n++) {
+                      var l = Cesium.Cartesian3.fromDegrees(lo, la);
+                      var lxy = rotate_point(l.x, l.y, l.z, sx, sy, sz, 90);
+                      var lxyz = rotate_point(sx, sy, sz, lxy[0], lxy[1], lxy[2], (0.002 + i * 0.00025) * 2 ** n);
+                      var llalo = xyz_to_lat_lon(lxyz[0], lxyz[1], lxyz[2]);
+                      var llo = rad_to_deg(llalo[0]);
+                      var lla = rad_to_deg(llalo[1]);
+
+                      var lb = viewer.entities.add({
+                          label: {
+                              text: lbl,
+                              font: '16px sans-serif',
+                              verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                              horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+                              translucencyByDistance: new Cesium.NearFarScalar(sds[n], 1, eds[n], 0),
+                              fillColor: Cesium.Color.BLACK,
+                              showBackground: true,
+                              backgroundColor: Cesium.Color.YELLOW
+                          },
+                          position: Cesium.Cartesian3.fromDegrees(llo, lla),
+                          parent: labels
+                      });
+                      // map_labels_one.push(lb);
+                  }
+
+                 
+              }
+
+              if (planets[i][1] == "Ma") {
+                  xyz = rotate_point(0, 0, 6371000, sx, sy, sz, -planets[i][0] + 150);
+                  lcam_pos.push(-planets[i][0] + 150);
+                  var c = Cesium.Cartesian3.fromElements(xyz[0], xyz[1], xyz[2]);
+                  var cart = Cesium.Cartographic.fromCartesian(c);
+                  var la = rad_to_deg(cart.latitude);
+                  var lo = rad_to_deg(cart.longitude);
+
+                  var lbl = ">150" + planets[i][1];
+
+                  // Add polyline of aspect (we add 2 polylines to create desirable effect)
+                  var dl = 32;
+                  var dp = 210;
+                  var w = 4;
+
+                  var poly = viewer.entities.add({
+                      polyline: {
+                          positions: Cesium.Cartesian3.fromDegreesArray([
+                              clo, cla,
+                              lo, la,
+                              olo, ola
+                          ]),
+                          width: w,
+                          material: new Cesium.PolylineDashMaterialProperty({
+                              color: Cesium.Color.WHITE,
+                              gapColor: Cesium.Color.TRANSPARENT,
+                              dashLength: dl,
+                              dashPattern: dp
+                          })
+                      }
+                  });
+                  
+                  map_lines_one.push(poly);
+
+                  // Add labels
+                  for (n = 0; n < sds.length - 1; n++) {
+                      var l = Cesium.Cartesian3.fromDegrees(lo, la);
+                      var lxy = rotate_point(l.x, l.y, l.z, sx, sy, sz, 90);
+                      var lxyz = rotate_point(sx, sy, sz, lxy[0], lxy[1], lxy[2], 0.0025 * 2 ** n);
+                      var llalo = xyz_to_lat_lon(lxyz[0], lxyz[1], lxyz[2]);
+                      var llo = rad_to_deg(llalo[0]);
+                      var lla = rad_to_deg(llalo[1]);
+
+                      var lb = viewer.entities.add({
+                          label: {
+                              text: lbl,
+                              font: '16px sans-serif',
+                              verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                              horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+                              translucencyByDistance: new Cesium.NearFarScalar(sds[n], 1, eds[n], 0),
+                              fillColor: Cesium.Color.BLACK,
+                              showBackground: true,
+                              backgroundColor: Cesium.Color.YELLOW
+                          },
+                          position: Cesium.Cartesian3.fromDegrees(llo, lla),
+                          parent: labels
+                      });
+                  }
+              }
+              
+              map_lines.push(map_lines_one);
+              map_labels.push(labels);
+          } else {
+
+		  }
+      }
+
+      // On camera move
+      var axes = [];
+      var axes_camera = [];
+
+	  for (i = 0; i < map_lines.length; i++) {
+	  	  for (j = 1; j < map_lines[i].length; j++) {
+			  map_lines[i][j].show = false;
+		  }
+		  try {
+			  map_labels[i].show = false;
+		  } catch (e) {
+		  } finally {
+		  }
+	  }
+
+      // For show/hide the aspects of planets
+      $('.legend-aspect-check').change(function() {
+          var pl = $(this).parent().find('.legend-aspect-name').text();
+          for (i = 0; i < 12; i++) {
+              if (map_lines[i][0] == pl) {
+                  for (j = 1; j < map_lines[i].length; j++) {
+                      map_lines[i][j].show = this.checked;
+                  }
+				  try {
+				  	  map_labels[i].show = this.checked;
+				  } catch (e) {
+
+				  } finally {
+				  	  break;
+				  }
+              }
+          }
+      });
+
+	  $('#lines_navamshi_checkbox').change(function() {
+	      for (i = 0; i < lines_navamshi.length; i++) {
+			  lines_navamshi[i].show = this.checked;
+		  }
+	  });
+    </script>
+  </body>
+</html>

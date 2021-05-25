@@ -1,0 +1,409 @@
+<!DOCTYPE html >
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Persons</title>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    </head>
+
+    {% load static %}
+
+    <style>
+        .horizontal-center {
+            display: flex;
+            align-items: center;
+        }
+
+        .persons-list {
+            width: 70%;
+        }
+
+        .table .text {
+            position: relative;
+        }
+        .table .text span {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            position: absolute;
+            left: 0;
+            right: 0;
+        }
+        .text:before {
+            content: '';
+            display: inline-block;
+        }
+
+        .btn-circle.btn-xl {
+            width: 70px;
+            height: 70px;
+            border-radius: 35px;
+            font-size: 24px;
+            line-height: 1.33;
+        }
+
+        .btn-fixed {
+            position: fixed;
+            top: 80%;
+            left: 80%;
+        }
+
+        .modal{
+            z-index: 20;
+        }
+        .modal-backdrop{
+            z-index: 10;
+        }
+
+        @media (min-width: 768px) {
+            .modal-xl {
+                width: 80%;
+                max-width:900px;
+            }
+        }
+
+        .btn-xs {
+            padding: 5% auto;
+            font-size: 75%;
+        }
+
+        @media (max-width: 768px) {
+            .btn-fixed {
+                position: fixed;
+                top: 80%;
+                left: 70%;
+            }
+
+            .btn-xs {
+                padding: 5% auto;
+                font-size: 50%;
+            }
+        }
+
+        .navbar-dark, .navbar, .navbar-expand {
+            background-color: #293462;
+        }
+
+        .bg {
+            height: 100%;
+            background-image: url({% static "/images/bg.svg" %});
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
+        }
+
+        body, html {
+            height: 100%;
+        }
+    </style>
+
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark d-flex flex-row justify-content-between" role="navigation">
+    			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+    				<span class="navbar-toggler-icon"></span>
+    			</button>
+    			<div class="collapse navbar-collapse" id="navbarMain">
+    				<div class="navbar-nav d-flex justify-content-between w-100">
+                        <div class="d-flex">
+                            <div class="text-center" style="width: 300px">
+                                <a class="navbar-brand" href="index">JyotishMaps</a>
+                            </div>
+                            <li class="nav-item dropdown">
+        						<a class="nav-link dropdown-toggle" href="#" id="navbarDropDown1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        						  My World
+        						</a>
+        						<div class="dropdown-menu" aria-labelledby="navbarDropDown1">
+        							<a class="dropdown-item nav-item nav-link text-dark" href="relocation_map_input">Places</a>
+        							<a class="dropdown-item nav-item nav-link text-dark" href="map_sessions">Sessions</a>
+        						</div>
+        					</li>
+                            <a class="nav-item nav-link" href="videos">Videos</a>
+        					{% if user.is_superuser %}
+        						<a class="nav-item nav-link" href="persons_list">Persons</a>
+        					{% endif %}
+                            {% if user.is_superuser %}
+        						<a class="nav-item nav-link" href="admin_panel">Admin panel</a>
+        					{% endif %}
+                            {% if user.is_superuser %}
+        						<a class="nav-item nav-link" href="admin_settings">Settings</a>
+        					{% endif %}
+                        </div>
+                        <div class="d-flex">
+                            <button class="btn btn-dark rounded" type="button" onclick="window.location = 'logout'" style="background-color: #ec9b3b;">Logout</button>
+                        </div>
+
+    				</div>
+    			</div>
+    	</nav>
+
+        <datalist id="gender_list">
+            <option value="Male"></option>
+            <option value="Female"></option>
+        </datalist>
+
+        <div class="container-fluid p-4 justify-content-center bg">
+            <div class="container">
+                <p></p>
+                <div class="row">
+                    <div class="col">
+                        <h3>Persons</h3>
+                    </div>
+                </div>
+            </div>
+
+            <table class="table table-hover table-sm text-white rounded" style="background-color: rgba(0, 0, 0, 0.5)">
+                <form action="#" method="GET">{% csrf_token %}
+                    {% autoescape off %}
+                    {{link_id}}
+                    {% endautoescape %}
+                    <input type="text" id="personDeleteId" name="personDeleteId" value="" hidden>
+                    <thead>
+                        <tr>
+                            <th scope="col"></th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Birthdate</th>
+                            <th scope="col">Birthplace</th>
+                            <th scope="col">Gender</th>
+                            <th scope="col"></th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% autoescape off %}
+                        {{entries}}
+                        {% endautoescape %}
+                    </tbody>
+
+                    <script>
+                        $('.btn_delete_person').on('click', function() {
+                            $('#personDeleteId').val($(this).parent().find('div').text());
+                        });
+                    </script>
+                </form>
+            </table>
+
+            <div class="container">
+                <form>
+                    {% autoescape off %}
+                    {{link_id}}
+                    {% endautoescape %}
+                    <div class="row">
+                        {% autoescape off %}
+                        {{links}}
+                        {% endautoescape %}
+                    </div>
+                </form>
+            </div>
+
+            <div class="container">
+                <button class="btn btn-success btn-xl btn-circle btn-fixed" data-toggle="modal" data-target="#modalAdd">+</button>
+            </div>
+        </div>
+
+        <datalist id="persons_datalist">
+            {% autoescape off %}
+            {{datalist}}
+            {% endautoescape %}
+        </datalist>
+
+        <div id="modalEdit" class="modal fade" role="dialog">
+            <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Edit person</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <form action="#" method="GET">{% csrf_token %}
+                            {% autoescape off %}
+                            {{link_id}}
+                            {% endautoescape %}
+                            <div class="col">
+                                <div class="container-fluid">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label class="person-label mb-0">Person</label>
+                                            <input type="text" class="form-control" id="inputNameEdit" name="inputNameEdit" placeholder="Name" maxlength=32 required>
+                                            <input type="hidden" id="nameEditHidden" name="nameEditHidden">
+                                        </div>
+                                        <div class="col-3 p-0">
+                                            <label class="mb-0">Birthdate</label>
+                                            <input type="date" class="form-control" id="inputDateEdit" name="inputDateEdit" min="1000-01-01" max="2029-12-31" required>
+                                            <input type="hidden" id="bdateEditHidden" name="bdateEditHidden">
+                                        </div>
+                                        <div class="col-3">
+                                            <label class="mt-0 mb-0">Birthtime</label>
+                                            <input type="time" class="form-control" id="inputTimeEdit" name="inputTimeEdit" required>
+                                            <input type="hidden" id="btimeEditHidden" name="btimeEditHidden">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col">
+                                            <label class="mt-1 mb-0">Place of birth</label>
+                                            <input type="text" class="form-control" id="autocomplete1" name="autocomplete1" placeholder="Type country, city" onfocus="geolocate()" required>
+                                            <input type="hidden" id="bplaceEditHidden" name="bplaceEditHidden">
+                                        </div>
+                                        <div class="col-2 pl-0">
+                                            <label class="mt-1 mb-0">Gender</label>
+                                            <input list="gender_list" class="form-control" id="inputGenderEdit" name="inputGenderEdit" required>
+                                            <input type="hidden" id="genderEditHidden" name="genderEditHidden">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col">
+                                            <label class="mt-1 mb-0">Username</label>
+                                            <input type="text" class="form-control" id="usernameEdit" name="usernameEdit" required>
+                                            <input type="hidden" id="usernameHidden" name="usernameHidden">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="container-fluid">
+                                    <button class="btn btn-block btn-primary mt-3 mb-3" type="submit">Save</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modalAdd" class="modal fade" role="dialog">
+            <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Add person</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <form action="#" method="GET">{% csrf_token %}
+                            {% autoescape off %}
+                            {{link_id}}
+                            {% endautoescape %}
+                            <div class="col">
+                                <div class="container-fluid">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label class="person-label mb-0">Person</label>
+                                            <input type="text" class="form-control" id="inputNameAdd" name="inputNameAdd" placeholder="Name" maxlength=32 required>
+                                        </div>
+                                        <div class="col-3 p-0">
+                                            <label class="mb-0">Birthdate</label>
+                                            <input type="date" class="form-control" id="inputDateAdd" name="inputDateAdd" min="1000-01-01" max="2029-12-31" required>
+                                        </div>
+                                        <div class="col-3">
+                                            <label class="mt-0 mb-0">Birthtime</label>
+                                            <input type="time" class="form-control" id="inputTimeAdd" name="inputTimeAdd" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col">
+                                            <label class="mt-1 mb-0">Place of birth</label>
+                                            <input type="text" class="form-control" id="autocomplete2" name="autocomplete2" placeholder="Type country, city" onfocus="geolocate()" required>
+                                        </div>
+                                        <div class="col-2 pl-0">
+                                            <label class="mt-1 mb-0">Gender</label>
+                                            <input list="gender_list" class="form-control" id="inputGenderAdd" name="inputGenderAdd" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col">
+                                            <label class="mt-1 mb-0">Username</label>
+                                            <input type="text" class="form-control" id="usernameAdd" name="usernameAdd" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="container-fluid">
+                                    <button class="btn btn-block btn-primary mt-3 mb-3" type="submit">Add</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            $('.btn_link_id').on('click', function () {
+                $('.link_id').val($(this).text());
+            });
+        </script>
+
+        <script>
+            var placeSearch, autocomplete1, autocomplete2;
+
+            function initAutocomplete() {
+                autocomplete1 = new google.maps.places.Autocomplete((document.getElementById('autocomplete1')), {types: ['geocode']});
+                autocomplete2 = new google.maps.places.Autocomplete((document.getElementById('autocomplete2')), {types: ['geocode']});
+            }
+
+            function geolocate1() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        var geolocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        var circle = new google.maps.Circle({
+                            center: geolocation,
+                            radius: position.coords.accuracy
+                        });
+                        autocomplete1.setBounds(circle.getBounds());
+                    });
+                }
+            }
+
+            function geolocate2() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        var geolocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        var circle = new google.maps.Circle({
+                            center: geolocation,
+                            radius: position.coords.accuracy
+                        });
+                        autocomplete2.setBounds(circle.getBounds());
+                    });
+                }
+            }
+        </script>
+
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASsKRcBk1D1J_oWy7teTjodHQ5N1uOl1M&libraries=places&callback=initAutocomplete" async defer></script>
+
+        <script>
+            $('#modalEdit').on('show.bs.modal', function (event) {
+              var button = $(event.relatedTarget)
+
+              var name = button.data('name')
+              var bdate = button.data('bdate')
+              var btime = button.data('btime')
+              var place = button.data('place')
+              var gender = button.data('gender')
+              var username = button.data('username')
+
+              var modal = $(this)
+
+              modal.find('.modal-body #inputNameEdit').val(name)
+              modal.find('.modal-body #inputDateEdit').val(bdate)
+              modal.find('.modal-body #inputTimeEdit').val(btime)
+              modal.find('.modal-body #autocomplete1').val(place)
+              modal.find('.modal-body #inputGenderEdit').val(gender)
+              modal.find('.modal-body #usernameEdit').val(username)
+
+              modal.find('.modal-body #nameEditHidden').val(name)
+              modal.find('.modal-body #bdateEditHidden').val(bdate)
+              modal.find('.modal-body #btimeEditHidden').val(btime)
+              modal.find('.modal-body #bplaceEditHidden').val(place)
+              modal.find('.modal-body #genderEditHidden').val(gender)
+              modal.find('.modal-body #usernameHidden').val(username)
+            });
+        </script>
+    </body>
+</html>

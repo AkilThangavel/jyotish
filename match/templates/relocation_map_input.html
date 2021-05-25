@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Relocation Map Input Data</title>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-noty/2.3.7/packaged/jquery.noty.packaged.min.js"></script>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.min.css">
+        <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.4.0/animate.min.css">
+    </head>
+
+    {% load static %}
+
+    <style>
+        .vertical-center {
+            min-height: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        form {
+            width: 700px;
+        }
+        @media only screen and (max-width: 700px) {
+            form {
+                width: 100%;
+            }
+        }
+
+        .person-label {
+            font-weight: bold;
+        }
+
+        input {
+            resize: none;
+        }
+
+        .navbar-dark, .navbar, .navbar-expand {
+            background-color: #293462;
+        }
+
+        .bg {
+            height: 100%;
+            background-image: url({% static "/images/bg.svg" %});
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
+        }
+
+        body, html {
+            height: 100%;
+        }
+    </style>
+
+    <body>
+        <datalist id="persons_list_autocomplete">
+        </datalist>
+
+        <datalist id="sessions_autocomplete">
+            {% for ses in sessions %}
+                <option value="{{ses.0}}    {{ses.1}}    {{ses.2}}"></option>
+            {% endfor %}
+        </datalist>
+
+        <nav class="navbar navbar-expand-lg navbar-dark d-flex flex-row justify-content-between" role="navigation">
+    			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+    				<span class="navbar-toggler-icon"></span>
+    			</button>
+    			<div class="collapse navbar-collapse" id="navbarMain">
+    				<div class="navbar-nav d-flex justify-content-between w-100">
+                        <div class="d-flex">
+                            <div class="text-center" style="width: 300px">
+                                <a class="navbar-brand" href="index">JyotishMaps</a>
+                            </div>
+                            <li class="nav-item dropdown">
+        						<a class="nav-link dropdown-toggle" href="#" id="navbarDropDown1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        						  My World
+        						</a>
+        						<div class="dropdown-menu" aria-labelledby="navbarDropDown1">
+        							<a class="dropdown-item nav-item nav-link text-dark" href="relocation_map_input">Places</a>
+        							<a class="dropdown-item nav-item nav-link text-dark" href="map_sessions">Sessions</a>
+        						</div>
+        					</li>
+                            <a class="nav-item nav-link" href="videos">Videos</a>
+        					{% if user.is_superuser %}
+        						<a class="nav-item nav-link" href="persons_list">Persons</a>
+        					{% endif %}
+                            {% if user.is_superuser %}
+        						<a class="nav-item nav-link" href="admin_panel">Admin panel</a>
+        					{% endif %}
+                            {% if user.is_superuser %}
+        						<a class="nav-item nav-link" href="admin_settings">Settings</a>
+        					{% endif %}
+                        </div>
+                        <div class="d-flex">
+                            <button class="btn btn-dark rounded" type="button" onclick="window.location = 'logout'" style="background-color: #ec9b3b;">Logout</button>
+                        </div>
+
+    				</div>
+    			</div>
+    	</nav>
+
+        <div class="vertical-center justify-content-center bg">
+            <form action="relocation_map3d" method="GET">{% csrf_token %}
+                <h1 class="h3 font-weight-normal mb-3 text-center text-dark">Add your Places</h1>
+                <div class="col">
+                    <datalist id="gender_list">
+                        <option value="Male"></option>
+                        <option value="Female"></option>
+                    </datalist>
+                    <div id="persons">
+                        {% if user.is_superuser %}
+                            <div class="container-fluid bg-warning rounded">
+                                <div class="row pt-2">
+                                    <div class="col-6">
+                                        <label class="person-label mb-0">Main Person</label>
+                                        <input list="persons_list_autocomplete" autocomplete="off" type="text" class="form-control person_name_field" id="inputName1" name="inputName1" placeholder="Name" maxlength=200 required>
+                                    </div>
+                                    <div class="col-3 p-0">
+                                        <label class="mb-0">Birthdate</label>
+                                        <input type="date" class="form-control" id="date" name="date" min="1000-01-01" max="2029-12-31" required>
+                                    </div>
+                                    <div class="col-3">
+                                        <label class="mt-0 mb-0">Birthtime</label>
+                                        <input type="time" class="form-control" id="time" name="time" required>
+                                    </div>
+                                </div>
+                                <div class="row pb-3">
+                                    <div class="col">
+                                        <label class="mt-1 mb-0">Place of birth</label>
+                                        <input type="text" class="form-control" id="autocomplete1" name="autocomplete1" placeholder="Type country, city" onfocus="geolocate()" required>
+                                    </div>
+                                    <div class="col-2 pl-0">
+                                        <label class="mt-1 mb-0">Gender</label>
+                                        <input list="gender_list" class="form-control" id="inputGender1" name="inputGender1" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="container-fluid bg-warning rounded mt-3 pb-3">
+                                <div class="row pt-2">
+                                    <div class="col">
+                                        <div class="row">
+                                            <label class="mt-0 mb-0 ml-3">Relocation</label>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col p-0 ml-3">
+                                                <input type="string" class="form-control" id="reloc_lat" name="reloc_lat" placeholder="Latitude">
+                                            </div>
+                                            <div class="col">
+                                                <input type="string" class="form-control" id="reloc_lon" name="reloc_lon" placeholder="Longitude">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="change_degs" class="container-fluid rounded mt-3 pb-3">
+                                <div id="degs" class="row bg-warning rounded">
+                                    <div class="row pt-3 pl-3 pr-3">
+                                        <div class="col">
+                                            <div class="d-flex flex-row">
+                                                <p style="font-size: 16pt">Su</p>
+                                                <input id="CD_Su" style="font-size: 14pt; padding-right: 0; padding-left: 5px" class="form-control ml-2" type="text" name="CD_Su" value="">
+                                            </div>
+                                            <div class="d-flex flex-row">
+                                                <p style="font-size: 16pt">Mo</p>
+                                                <input id="CD_Mo" style="font-size: 14pt; padding-right: 0; padding-left: 5px" class="form-control ml-2" type="text" name="CD_Mo" value="">
+                                            </div>
+                                            <div class="d-flex flex-row">
+                                                <p style="font-size: 16pt">Me</p>
+                                                <input id="CD_Me" style="font-size: 14pt; padding-right: 0; padding-left: 5px" class="form-control ml-2" type="text" name="CD_Me" value="">
+                                            </div>
+                                            <div class="d-flex flex-row">
+                                                <p style="font-size: 16pt">Ma</p>
+                                                <input id="CD_Ma" style="font-size: 14pt; padding-right: 0; padding-left: 5px" class="form-control ml-2" type="text" name="CD_Ma" value="">
+                                            </div>
+                                            <div class="d-flex flex-row">
+                                                <p style="font-size: 16pt">Ju</p>
+                                                <input id="CD_Ju" style="font-size: 14pt; padding-right: 0; padding-left: 5px" class="form-control ml-2" type="text" name="CD_Ju" value="">
+                                            </div>
+                                        </div>
+
+                                        <div class="col">
+                                            <div class="d-flex flex-row">
+                                                <p style="font-size: 16pt">Ve</p>
+                                                <input id="CD_Ve" style="font-size: 14pt; padding-right: 0; padding-left: 5px" class="form-control ml-2" type="text" name="CD_Ve" value="">
+                                            </div>
+                                            <div class="d-flex flex-row">
+                                                <p style="font-size: 16pt">Sa</p>
+                                                <input id="CD_Sa" style="font-size: 14pt; padding-right: 0; padding-left: 5px" class="form-control ml-2" type="text" name="CD_Sa" value="">
+                                            </div>
+                                            <div class="d-flex flex-row">
+                                                <p style="font-size: 16pt">Ra</p>
+                                                <input id="CD_Ra" style="font-size: 14pt; padding-right: 0; padding-left: 5px" class="form-control ml-2" type="text" name="CD_Ra" value="">
+                                            </div>
+                                            <div class="d-flex flex-row">
+                                                <p style="font-size: 16pt">Ke</p>
+                                                <input id="CD_Ke" style="font-size: 14pt; padding-right: 0; padding-left: 5px" class="form-control ml-2" type="text" name="CD_Ke" value="">
+                                            </div>
+                                            <div class="d-flex flex-row">
+                                                <p style="font-size: 16pt">As</p>
+                                                <input id="CD_As" style="font-size: 14pt; padding-right: 0; padding-left: 5px" class="form-control ml-2" type="text" name="CD_As" value="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="container-fluid bg-warning rounded mt-3 pb-3">
+                            <div class="row pt-2">
+                                <div class="col">
+                                    <label class="person-label mb-0">Load session or start a new one</label>
+                                    <input list="sessions_autocomplete" autocomplete="off" type="text" class="form-control" id="inputSession" name="inputSession" placeholder="Session" maxlength=200>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if user.is_superuser %}
+                            <div class="row mt-3">
+                                <div class="col-3 pr-0">
+                                    <button id="save_person" class="btn btn-success btn-block" type="button">Save person</button>
+                                </div>
+                                <div class="col">
+                                    <button class="btn btn-block btn-primary" type="submit">Show on Earth Map</button>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="row mt-3">
+                                <div class="col">
+                                    <button class="btn btn-block btn-primary" type="submit">Here we go!</button>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <script type="text/javascript">
+                        $('.person_name_field').on('input change', function() {
+                            var name = $(this).val();
+                            if (name.length > 3) {
+                                $.ajax({
+                                    url: '/ajax/validate_person_name/',
+                                    data: {
+                                        'name': name
+                                    },
+                                    dataType: 'json',
+                                    success: function (data) {
+                                        $('#persons_list_autocomplete').html(data.persons);
+                                    },
+                                    error: function (data) {
+                                        console.log("Couldn't validate person's name " + name);
+                                    }
+                                });
+                            }
+                        });
+
+                        {% if user.is_superuser %}
+                            $('.person_name_field').on('change', function() {
+                                var name = $(this).val();
+                                if (name.length > 3) {
+                                    $.ajax({
+                                        url: '/ajax/validate_person_name_admin/',
+                                        data: {
+                                            'name': name
+                                        },
+                                        dataType: 'json',
+                                        success: function (data) {
+                                            $('#sessions_autocomplete').html(data.sessions);
+
+                                            var name = $('#inputName1').val();
+                                            var bdate = $('#date').val();
+                                            var btime = $('#time').val();
+                                            var bplace = $('#autocomplete1').val();
+
+                                            $.ajax({
+                                                url: '/ajax/get_degrees/',
+                                                data: {
+                                                    'name': name,
+                                                    'bdate': bdate,
+                                                    'btime': btime,
+                                                    'bplace': bplace
+                                                },
+                                                dataType: 'json',
+                                                success: function (data) {
+                                                    $('#change_degs #CD_Su').val(data.Su);
+                                                    $('#change_degs #CD_Mo').val(data.Mo);
+                                                    $('#change_degs #CD_Me').val(data.Me);
+                                                    $('#change_degs #CD_Ma').val(data.Ma);
+                                                    $('#change_degs #CD_Ju').val(data.Ju);
+                                                    $('#change_degs #CD_Ve').val(data.Ve);
+                                                    $('#change_degs #CD_Sa').val(data.Sa);
+                                                    $('#change_degs #CD_Ra').val(data.Ra);
+                                                    $('#change_degs #CD_Ke').val(data.Ke);
+                                                    $('#change_degs #CD_As').val(data.As);
+                                                }
+                                            });
+                                        },
+                                        error: function (data) {
+                                            console.log("Couldn't get person's sessions " + name);
+                                        }
+                                    });
+                                }
+                            });
+                        {% endif %}
+                    </script>
+
+                    <script>
+                        $('#save_person').on('click', function() {
+                            var name = $('#inputName1').val();
+                            var bdate = $('#date').val();
+                            var btime = $('#time').val();
+                            var bplace = $('#autocomplete1').val();
+                            var gender = $('#inputGender1').val();
+
+                            if (name && bdate && btime && bplace && gender) {
+                                $(this).html('<div class="spinner-border text-light" role="status"><span class="sr-only">Loading...</span></div>');
+                                $.ajax({
+                                    url: '/ajax/add_person/',
+                                    data: {
+                                        'name': name,
+                                        'bdate': bdate,
+                                        'btime': btime,
+                                        'bplace': bplace,
+                                        'gender': gender
+                                    },
+                                    dataType: 'json',
+                                    success: function (data) {
+                                        if (data.state == '1') {
+                                            var n = noty({
+                                                text: "Person successfully saved!",
+                                                type: "success", layout: "topRight", timeout: 3000,
+                                                animation: {
+                                                    open: 'animated bounceInRight',
+                                                    close: 'animated bounceOutRight',
+                                                    easing: 'swing',
+                                                    speed: 500
+                                                }
+                                            });
+                                        } else {
+                                            var n = noty({
+                                                text: "Person with such data already exists!",
+                                                type: "error", layout: "topRight", timeout: 3000,
+                                                animation: {
+                                                    open: 'animated bounceInRight',
+                                                    close: 'animated bounceOutRight',
+                                                    easing: 'swing',
+                                                    speed: 500
+                                                }
+                                            });
+                                        }
+                                    },
+                                    error: function (data) {
+                                        var n = noty({
+                                            text: "Couldn't save person!",
+                                            type: "error", layout: "topRight", timeout: 3000,
+                                            animation: {
+                                                open: 'animated bounceInRight',
+                                                close: 'animated bounceOutRight',
+                                                easing: 'swing',
+                                                speed: 500
+                                            }
+                                        });
+                                    }
+                                });
+                            } else {
+                                var n = noty({
+                                    text: "To save a person firstly fill in all the fields",
+                                    type: "warning", layout: "topRight", timeout: 3000,
+                                    animation: {
+                                        open: 'animated bounceInRight',
+                                        close: 'animated bounceOutRight',
+                                        easing: 'swing',
+                                        speed: 500
+                                    }
+                                });
+                            }
+                            $(this).html('Save person');
+                        });
+                    </script>
+
+                    <script>
+                        $('div.container-fluid div.col-6 input').on('input', function() {
+                            var data = $(this).val().split(" | ");
+                            var inputs = $(this).parent().parent().parent().find('input');
+                            if (data.length == 5) {
+                                inputs[0].value = data[0];
+                                inputs[1].value = data[1];
+                                inputs[2].value = data[2];
+                                inputs[3].value = data[3];
+                                inputs[4].value = data[4];
+                            }
+                        });
+                    </script>
+
+                    <script>
+                            var placeSearch, autocomplete;
+
+                            function initAutocomplete() {
+                                autocomplete1 = new google.maps.places.Autocomplete((document.getElementById('autocomplete1')), {types: ['geocode']});
+                            }
+
+                            function geolocate() {
+                                if (navigator.geolocation) {
+                                  navigator.geolocation.getCurrentPosition(function(position) {
+                                    var geolocation = {
+                                      lat: position.coords.latitude,
+                                      lng: position.coords.longitude
+                                    };
+                                    var circle = new google.maps.Circle({
+                                      center: geolocation,
+                                      radius: position.coords.accuracy
+                                    });
+                                    autocomplete1.setBounds(circle.getBounds());
+                                  });
+                                }
+                            }
+                    </script>
+                    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASsKRcBk1D1J_oWy7teTjodHQ5N1uOl1M&libraries=places&callback=initAutocomplete" async defer></script>
+                </div>
+            </form>
+        </div>
+    </body>
+</html>

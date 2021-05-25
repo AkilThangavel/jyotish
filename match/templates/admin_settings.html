@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Settings</title>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-noty/2.3.7/packaged/jquery.noty.packaged.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js"></script>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.min.css">
+        <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.4.0/animate.min.css">
+    </head>
+
+    {% load static %}
+
+    <style>
+        .vertical-center {
+            min-height: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        form {
+            width: 700px;
+        }
+        @media only screen and (max-width: 700px) {
+            form {
+                width: 100%;
+            }
+        }
+
+        .person-label {
+            font-weight: bold;
+        }
+
+        input {
+            resize: none;
+        }
+
+        .btn-circle.btn-xl {
+            width: 70px;
+            height: 70px;
+            border-radius: 35px;
+            font-size: 24px;
+            line-height: 1.33;
+        }
+
+        .btn-fixed {
+            position: fixed;
+            top: 80%;
+            left: 80%;
+        }
+
+        .modal-xl {
+            width: 80%;
+            max-width: 735px;
+        }
+
+        .modal{
+            z-index: 20;
+        }
+        .modal-backdrop{
+            z-index: 10;
+        }
+
+        .navbar-dark, .navbar, .navbar-expand {
+            background-color: #293462;
+        }
+
+        .bg {
+            height: 100%;
+            background-image: url({% static "/images/bg.svg" %});
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
+        }
+
+        body, html {
+            height: 100%;
+        }
+    </style>
+
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark d-flex flex-row justify-content-between" role="navigation">
+    			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+    				<span class="navbar-toggler-icon"></span>
+    			</button>
+    			<div class="collapse navbar-collapse" id="navbarMain">
+    				<div class="navbar-nav d-flex justify-content-between w-100">
+                        <div class="d-flex">
+                            <div class="text-center" style="width: 300px">
+                                <a class="navbar-brand" href="index">JyotishMaps</a>
+                            </div>
+                            <li class="nav-item dropdown">
+        						<a class="nav-link dropdown-toggle" href="#" id="navbarDropDown1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        						  My World
+        						</a>
+        						<div class="dropdown-menu" aria-labelledby="navbarDropDown1">
+        							<a class="dropdown-item nav-item nav-link text-dark" href="relocation_map_input">Places</a>
+        							<a class="dropdown-item nav-item nav-link text-dark" href="map_sessions">Sessions</a>
+        						</div>
+        					</li>
+                            <a class="nav-item nav-link" href="videos">Videos</a>
+        					{% if user.is_superuser %}
+        						<a class="nav-item nav-link" href="persons_list">Persons</a>
+        					{% endif %}
+                            {% if user.is_superuser %}
+        						<a class="nav-item nav-link" href="admin_panel">Admin panel</a>
+        					{% endif %}
+                            {% if user.is_superuser %}
+        						<a class="nav-item nav-link" href="admin_settings">Settings</a>
+        					{% endif %}
+                        </div>
+                        <div class="d-flex">
+                            <button class="btn rounded" type="button" onclick="window.location = 'logout'" style="background-color: #ec9b3b;">Logout</button>
+                        </div>
+    				</div>
+    			</div>
+    	</nav>
+
+
+        <div class="vertical-center bg">
+            <form action="#" method="POST" class="mx-auto" style="width: 300px">{% csrf_token %}
+                <div class="col">
+                    <div class="container-fluid mx-auto">
+                        <div class="row">
+                            <div class="col">
+                                <label class="mt-1 mb-0">New password</label>
+                                <input type="password" class="form-control" id="newp" name="newp" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="container-fluid">
+                        <button class="btn btn-block btn-primary mt-3 mb-3" type="submit">Change password</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </body>
+</html>

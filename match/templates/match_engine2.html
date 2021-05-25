@@ -1,0 +1,267 @@
+<!DOCTYPE html >
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=0.4">
+        <title> Astro Match | Matching Chart</title>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    </head>
+
+    <style>
+        body {
+            width: 100%;
+            height: 100%;
+        }
+
+        .vertical-center {
+            min-height: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 28pt;
+        }
+
+        p {
+            font-size: 18pt;
+        }
+
+        .button-font {
+            font-size: 18pt;
+        }
+
+        td, th {
+            border: none;
+        }
+    </style>
+
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary" role="navigation">
+                <a class="navbar-brand" href="#">AstroMatching</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <div class="navbar-nav">
+                        <a class="nav-item nav-link active" href="index">Home <span class="sr-only">(current)</span></a>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropDown1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              Matching
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropDown1">
+                                <a class="dropdown-item nav-item nav-link text-dark" href="data_input1">Match 1.0</a>
+                                <a class="dropdown-item nav-item nav-link text-dark" href="data_input2">Match 2.0</a>
+                                <a class="dropdown-item nav-item nav-link text-dark" href="data_input3">Match 3.0</a>
+                            </div>
+                        </li>
+                        <a class="nav-item nav-link" href="persons_list">Persons</a>
+                    </div>
+                </div>
+        </nav>
+
+        <div class="container-fluid justify-content-center vertical-center">
+            <div class="row">
+                <div class="col">
+                    <div class="row justify-content-center">
+                        <h1>Matching {{name1}} and {{name2}}</h1>
+                    </div>
+
+                    <p></p>
+
+                    <div class="row">
+                        <div class="col text-center">
+                            <b><p>{{name1}}</p></b>
+                            <p>{{bplace1}}</p>
+                            <p>{{bdate1}}, {{btime1}}</p>
+                            <button type="button" class="btn btn-info button-font" data-toggle="modal" data-target="#degreesModal1">Show degrees</button>
+                        </div>
+
+                        <div class="col text-center">
+                            <b><p>{{name2}}</p></b>
+                            <p>{{bplace2}}</p>
+                            <p>{{bdate2}}, {{btime2}}</p>
+                            <button type="button" class="btn btn-info button-font" data-toggle="modal" data-target="#degreesModal2">Show degrees</button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div id="main-chart"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="degreesModal1" class="modal fade" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Planets' degrees for {{name1}}</h4>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+
+                        <div class="modal-body">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Planet</th>
+                                        <th scope="col">Degree</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Su</td>
+                                        <td>{{sudeg1}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Mo</td>
+                                        <td>{{modeg1}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Me</td>
+                                        <td>{{medeg1}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ma</td>
+                                        <td>{{madeg1}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ju</td>
+                                        <td>{{judeg1}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ve</td>
+                                        <td>{{vedeg1}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Sa</td>
+                                        <td>{{sadeg1}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ra</td>
+                                        <td>{{radeg1}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ke</td>
+                                        <td>{{kedeg1}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>As</td>
+                                        <td>{{asdeg1}}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="degreesModal2" class="modal fade" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Planets' degrees for {{name2}}</h4>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+
+                        <div class="modal-body">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Planet</th>
+                                        <th scope="col">Degree</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Su</td>
+                                        <td>{{sudeg2}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Mo</td>
+                                        <td>{{modeg2}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Me</td>
+                                        <td>{{medeg2}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ma</td>
+                                        <td>{{madeg2}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ju</td>
+                                        <td>{{judeg2}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ve</td>
+                                        <td>{{vedeg2}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Sa</td>
+                                        <td>{{sadeg2}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ra</td>
+                                        <td>{{radeg2}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ke</td>
+                                        <td>{{kedeg2}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>As</td>
+                                        <td>{{asdeg2}}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                var x = "{{items}}".split(',')
+                var y1 = "{{y1}}".split(',')
+                var y2 = "{{y2}}".split(',')
+
+                data = [
+                {
+                    histfunc: "sum",
+                    y: y1,
+                    x: x,
+                    type: "histogram",
+                    name: "{{name1}} to {{name2}}"
+                },
+                {
+                    histfunc: "sum",
+                    y: y2,
+                    x: x,
+                    type: "histogram",
+                    name: "{{name2}} to {{name1}}"
+                }
+                ];
+
+                var lay = {
+                    showlegend: true,
+                    legend: {"orientation": "h"},
+                    autosize: false,
+                    width: 800,
+                    height: 800,
+                    xaxis: {
+                        fixedrange: true
+                    },
+                    yaxis: {
+                        fixedrange: true
+                    }
+                };
+
+                Plotly.newPlot('main-chart', data, lay, {displayModeBar: false, responsive: true});
+            </script>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Welcome to JyotishMaps</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-noty/2.3.7/packaged/jquery.noty.packaged.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js"></script>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.min.css">
+    </head>
+
+    {% load static %}
+
+    <style>
+        .vertical-center {
+            min-height: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        body, html {
+            height: 100%;
+        }
+
+        .bg {
+            height: 100%;
+            background-image: url({% static "/images/bg_jmaps.svg" %});
+            background-repeat: no-repeat;
+            background-size: 80% 80%;
+            background-position: center;
+        }
+    </style>
+
+    <body class="text-center bg">
+        <div class="container vertical-center justify-content-center">
+            <form action="login" method="post" style="width: 400px; margin-bottom: 14%">
+                {% csrf_token %}
+                <!-- <h1 class="h3 font-weight-normal mb-3">Log in</h1> -->
+                <input type="text" class="form-control" id="inputUsername" name="username" placeholder="Username">
+                <p></p>
+                <input type="password" class="form-control" id="inputPassword" name="password" placeholder="Password">
+                <p></p>
+                <button class="btn btn-block btn-primary mt-3" type="submit">Log in</button>
+                <p></p>
+            </form>
+        </div>
+    </body>
+
+    <script>
+        {% if messages %}
+            {% for m in messages %}
+                $.notify("{{m.message}}", "error");
+            {% endfor %}
+        {% endif %}
+    </script>
+</html>
